@@ -61,10 +61,10 @@
     },
     {
       "part1": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "SBPQRSCDF",
         "attempts": [],
-        "time": null
+        "time": 0.841831
       },
       "part2": {
         "solved": false,
