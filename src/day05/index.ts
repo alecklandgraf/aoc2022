@@ -68,7 +68,24 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  return;
+  const [stacksInput, columns, procedures] = splitInput(input);
+  const stacks = buildStacks(stacksInput, columns);
+  for (const procedure of procedures) {
+    const [_move, qty, _form, from, _to, to] = procedure.split(' ');
+    const fromStack = stacks[from];
+    const toStack = stacks[to];
+    const temp: string[] = [];
+    for (let i = 0; i < Number(qty); i++) {
+      temp.unshift(fromStack.shift() as string);
+    }
+    for (const item of temp) {
+      toStack.unshift(item);
+    }
+  }
+
+  return Object.values(stacks)
+    .map((stack) => stack[0] || '')
+    .join('');
 };
 
 run({
@@ -107,5 +124,5 @@ move 1 from 1 to 2`,
     solution: part2,
   },
   trimTestInputs: false,
-  onlyTests: true,
+  // onlyTests: true,
 });

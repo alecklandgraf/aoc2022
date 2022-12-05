@@ -64,13 +64,13 @@
         "solved": true,
         "result": "SBPQRSCDF",
         "attempts": [],
-        "time": 0.841831
+        "time": 0.90313
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "RGLVRCQSB",
         "attempts": [],
-        "time": null
+        "time": 1.519024
       }
     },
     {
