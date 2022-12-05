@@ -17,7 +17,7 @@ const parseInput = (rawInput: string) => rawInput.split('\n');
  */
 function splitInput(input: string[]): [string[], string, string[]] {
   const index = input.indexOf('');
-  // the array ['1', '2', '3', ...] isn't needed
+
   return [input.slice(0, index - 1), input[index - 1], input.slice(index + 1)];
 }
 

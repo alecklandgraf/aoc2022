@@ -7,8 +7,6 @@
 
 # 🎄 Advent of Code 2022 🎄
 
-https://github.com/caderek/aocrunner
-
 ## Solutions
 
 <!--SOLUTIONS-->
