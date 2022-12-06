@@ -2,19 +2,21 @@ import run from 'aocrunner';
 
 const parseInput = (rawInput: string) => rawInput;
 
+/**
+ * Returns true when all the characters of a string are unique
+ *
+ * unique('abc') // true
+ *
+ * unique('abca') // false
+ */
 function unique(str: string) {
   return new Set(str).size === str.length;
 }
 
 const part1 = (rawInput: string, distinctCharacters = 4) => {
-  const input = parseInput(rawInput);
-
   let start = 0;
   let end = distinctCharacters;
-  while (true) {
-    if (unique(input.slice(start, end))) {
-      break;
-    }
+  while (!unique(rawInput.slice(start, end))) {
     start++;
     end++;
   }
