@@ -75,29 +75,32 @@ function buildTree(input: string[]) {
   return tree;
 }
 
-let dirSizes: number[] = [];
-function findDirectoriesSize(tree: FileStructure) {
+function findDirectoriesSize(tree: FileStructure, dirSizes: number[] = []) {
   let size = _.sum(tree.files);
 
   for (const [key, value] of Object.entries(tree)) {
     if (key !== 'files') {
-      size += findDirectoriesSize(value as FileStructure);
+      const { size: dirSize } = findDirectoriesSize(
+        value as FileStructure,
+        dirSizes,
+      );
+      size += dirSize;
     }
   }
-  // there's a better way to do this, like return [size, dirSizes], but this is cleaner and faster
-  // maybe just use a closure
+
+  // I know, mutating the array is bad, but it's an implementation detail and
+  // I don't want to wrap this function in a closure
   dirSizes.push(size);
-  return size;
+  return { size, dirSizes };
 }
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const MAX_FILE_SIZE = 100000;
-  dirSizes = [];
 
   const tree = buildTree(input);
 
-  findDirectoriesSize(tree);
+  const { dirSizes } = findDirectoriesSize(tree);
 
   return _.sum(dirSizes.filter((size) => size <= MAX_FILE_SIZE));
 };
@@ -105,13 +108,12 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const FILE_SYSTEM_SPACE = 70000000;
   const MIN_UPDATE_SPACE = 30000000;
-  dirSizes = [];
   const input = parseInput(rawInput);
 
   const tree = buildTree(input);
   // console.log(JSON.stringify(tree, null, 2));
 
-  const size = findDirectoriesSize(tree);
+  const { size, dirSizes } = findDirectoriesSize(tree);
   const freeSpace = FILE_SYSTEM_SPACE - size;
 
   // console.log('total file size: ', size);
