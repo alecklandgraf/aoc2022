@@ -80,11 +80,7 @@ function findDirectoriesSizes(tree: FileStructure) {
   const subDirSizes: number[] = [];
 
   for (const [key, value] of Object.entries(tree)) {
-    if (key === 'files' && Array.isArray(value)) {
-      // if (_.sum(value)) {
-      //   sizes.push(_.sum(value));
-      // }
-    } else {
+    if (key !== 'files') {
       subDirSizes.push(...findDirectoriesSizes(value as FileStructure));
       sizes.push(...findDirectoriesSizes(value as FileStructure));
     }
@@ -94,23 +90,50 @@ function findDirectoriesSizes(tree: FileStructure) {
   return sizes;
 }
 
+const dirSizes: number[] = [];
+function findDirectoriesSizes2(tree: FileStructure) {
+  let size = _.sum(tree.files);
+
+  for (const [key, value] of Object.entries(tree)) {
+    if (key !== 'files') {
+      size += findDirectoriesSizes2(value as FileStructure);
+    }
+  }
+  dirSizes.push(size);
+  return size;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const MAX_FILE_SIZE = 100000;
 
   const tree = buildTree(input);
-  console.log(JSON.stringify(tree, null, 2));
 
   const sizes = findDirectoriesSizes(tree);
-  console.log('sizes', sizes);
 
   return _.sum(sizes.filter((size) => size <= MAX_FILE_SIZE));
 };
 
 const part2 = (rawInput: string) => {
+  const FILE_SYSTEM_SPACE = 70000000;
+  const MIN_UPDATE_SPACE = 30000000;
   const input = parseInput(rawInput);
 
-  return;
+  const tree = buildTree(input);
+  console.log(JSON.stringify(tree, null, 2));
+
+  const size = findDirectoriesSizes2(tree);
+  const freeSpace = FILE_SYSTEM_SPACE - size;
+
+  console.log('total file size: ', size);
+  console.log('free space: ', freeSpace);
+  console.log(
+    'all dir sizes: ',
+    _.sortBy(dirSizes),
+    _.sortBy(dirSizes).find((s) => freeSpace + s >= MIN_UPDATE_SPACE),
+  );
+
+  return _.sortBy(dirSizes).find((s) => freeSpace + s >= MIN_UPDATE_SPACE);
 };
 
 run({
@@ -148,10 +171,33 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: "",
-      // },
+      {
+        input: `
+        $ cd /
+        $ ls
+        dir a
+        14848514 b.txt
+        8504156 c.dat
+        dir d
+        $ cd a
+        $ ls
+        dir e
+        29116 f
+        2557 g
+        62596 h.lst
+        $ cd e
+        $ ls
+        584 i
+        $ cd ..
+        $ cd ..
+        $ cd d
+        $ ls
+        4060174 j
+        8033020 d.log
+        5626152 d.ext
+        7214296 k`,
+        expected: 24933642,
+      },
     ],
     solution: part2,
   },
