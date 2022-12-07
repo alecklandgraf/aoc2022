@@ -40,21 +40,19 @@ function buildTree(input: string[]) {
   const tree: FileStructure = {
     files: [],
   };
-  const path: string[] = [];
+  let path: string[] = [];
 
   for (const line of input) {
     if (isCommand(line)) {
       const command = parseCommand(line);
       if (command.operation === 'cd') {
         if (command.path === '/') {
-          // clear the path
-          path.length = 0;
+          path = [];
         } else if (command.path === '..') {
           path.pop();
         } else {
           path.push(command.path);
         }
-        // console.log(`changed path to /${path.join('/')}`);
       }
       if (command.operation === 'ls') {
         // noop
@@ -62,9 +60,11 @@ function buildTree(input: string[]) {
     } else {
       // add all files here to the current path in the tree and create directories
       if (line.startsWith('dir')) {
+        // parse `dir ${directoryName}`
         const [_dir, dir] = line.split(' ');
         _.set(tree, [...path, dir, 'files'], []);
       } else {
+        // parse `${fileSize} ${fileName}`
         const [fileSize, fileName] = line.split(' ');
         const files = _.get(tree, [...path, 'files']);
         files.push(Number(fileSize));
@@ -75,30 +75,17 @@ function buildTree(input: string[]) {
   return tree;
 }
 
-function findDirectoriesSizes(tree: FileStructure) {
-  const sizes: number[] = [];
-  const subDirSizes: number[] = [];
-
-  for (const [key, value] of Object.entries(tree)) {
-    if (key !== 'files') {
-      subDirSizes.push(...findDirectoriesSizes(value as FileStructure));
-      sizes.push(...findDirectoriesSizes(value as FileStructure));
-    }
-  }
-  sizes.push(_.sum(subDirSizes) + _.sum(tree.files));
-
-  return sizes;
-}
-
-const dirSizes: number[] = [];
-function findDirectoriesSizes2(tree: FileStructure) {
+let dirSizes: number[] = [];
+function findDirectoriesSize(tree: FileStructure) {
   let size = _.sum(tree.files);
 
   for (const [key, value] of Object.entries(tree)) {
     if (key !== 'files') {
-      size += findDirectoriesSizes2(value as FileStructure);
+      size += findDirectoriesSize(value as FileStructure);
     }
   }
+  // there's a better way to do this, like return [size, dirSizes], but this is cleaner and faster
+  // maybe just use a closure
   dirSizes.push(size);
   return size;
 }
@@ -106,32 +93,34 @@ function findDirectoriesSizes2(tree: FileStructure) {
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const MAX_FILE_SIZE = 100000;
+  dirSizes = [];
 
   const tree = buildTree(input);
 
-  const sizes = findDirectoriesSizes(tree);
+  findDirectoriesSize(tree);
 
-  return _.sum(sizes.filter((size) => size <= MAX_FILE_SIZE));
+  return _.sum(dirSizes.filter((size) => size <= MAX_FILE_SIZE));
 };
 
 const part2 = (rawInput: string) => {
   const FILE_SYSTEM_SPACE = 70000000;
   const MIN_UPDATE_SPACE = 30000000;
+  dirSizes = [];
   const input = parseInput(rawInput);
 
   const tree = buildTree(input);
-  console.log(JSON.stringify(tree, null, 2));
+  // console.log(JSON.stringify(tree, null, 2));
 
-  const size = findDirectoriesSizes2(tree);
+  const size = findDirectoriesSize(tree);
   const freeSpace = FILE_SYSTEM_SPACE - size;
 
-  console.log('total file size: ', size);
-  console.log('free space: ', freeSpace);
-  console.log(
-    'all dir sizes: ',
-    _.sortBy(dirSizes),
-    _.sortBy(dirSizes).find((s) => freeSpace + s >= MIN_UPDATE_SPACE),
-  );
+  // console.log('total file size: ', size);
+  // console.log('free space: ', freeSpace);
+  // console.log(
+  //   'all dir sizes: ',
+  //   _.sortBy(dirSizes),
+  //   _.sortBy(dirSizes).find((s) => freeSpace + s >= MIN_UPDATE_SPACE),
+  // );
 
   return _.sortBy(dirSizes).find((s) => freeSpace + s >= MIN_UPDATE_SPACE);
 };
