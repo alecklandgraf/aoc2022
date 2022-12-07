@@ -29,13 +29,11 @@ function parseCommand(input: string): Command {
   };
 }
 
-//'62596 h.lst'
-type Files = number[];
-// 'dir dmd'
-// type Directory = string;
-
+//'62596 h.lst' -> 62596
+type FileSizes = number[];
 type FileStructure = {
-  [key: string]: FileStructure | Files;
+  [key: string]: FileStructure | FileSizes;
+  files: FileSizes;
 };
 
 function buildTree(input: string[]) {
@@ -77,6 +75,25 @@ function buildTree(input: string[]) {
   return tree;
 }
 
+function findDirectoriesSizes(tree: FileStructure) {
+  const sizes: number[] = [];
+  const subDirSizes: number[] = [];
+
+  for (const [key, value] of Object.entries(tree)) {
+    if (key === 'files' && Array.isArray(value)) {
+      // if (_.sum(value)) {
+      //   sizes.push(_.sum(value));
+      // }
+    } else {
+      subDirSizes.push(...findDirectoriesSizes(value as FileStructure));
+      sizes.push(...findDirectoriesSizes(value as FileStructure));
+    }
+  }
+  sizes.push(_.sum(subDirSizes) + _.sum(tree.files));
+
+  return sizes;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const MAX_FILE_SIZE = 100000;
@@ -84,7 +101,10 @@ const part1 = (rawInput: string) => {
   const tree = buildTree(input);
   console.log(JSON.stringify(tree, null, 2));
 
-  return;
+  const sizes = findDirectoriesSizes(tree);
+  console.log('sizes', sizes);
+
+  return _.sum(sizes.filter((size) => size <= MAX_FILE_SIZE));
 };
 
 const part2 = (rawInput: string) => {
@@ -136,5 +156,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
