@@ -1,13 +1,9 @@
 import run from 'aocrunner';
 
-const parseInput = (rawInput: string) => rawInput.split('\n');
+const parseInput = (rawInput: string) =>
+  rawInput.split('\n').map((row) => row.split('').map(Number));
 
-function tree(x: number, y: number, forest: string[]) {
-  const row = forest[y];
-  return row.at(x);
-}
-
-function treeBlocked(x: number, y: number, forest: string[]) {
+function treeBlocked(x: number, y: number, forest: number[][]) {
   const row = forest[y];
   const treeVale = Number(row.at(x));
   // console.log(x, y, row, treeVale);
@@ -17,20 +13,21 @@ function treeBlocked(x: number, y: number, forest: string[]) {
   let treeVisibleDown = true;
   for (let i = 0; i < row.length; i++) {
     if (x === i) continue;
-    if (Number(row.at(i)) >= treeVale && i < x) {
+    if (row[i] >= treeVale && i < x) {
       treeVisibleLeft = false;
     }
-    if (Number(row.at(i)) >= treeVale && i > x) {
+    if (row[i] >= treeVale && i > x) {
       treeVisibleRight = false;
     }
   }
+  if (treeVisibleLeft || treeVisibleRight) return true;
   for (let i = 0; i < forest.length; i++) {
     if (y === i) continue;
     const row = forest[i];
-    if (Number(row.at(x)) >= treeVale && i < y) {
+    if (row[x] >= treeVale && i < y) {
       treeVisibleUp = false;
     }
-    if (Number(row.at(x)) >= treeVale && i > y) {
+    if (row[x] >= treeVale && i > y) {
       treeVisibleDown = false;
     }
   }
