@@ -90,9 +90,11 @@ function senicScore(x: number, y: number, forest: number[][]) {
     treeVisibleUp,
     treeVisibleDown,
   ].reduce((acc, cur) => acc * cur, 1);
-  // console.log(
-  //   `${row.map((t, i) => (i === x ? `(${t})` : t)).join(' ')}: ${scrore}`,
-  // );
+  console.log(
+    `${row
+      .map((t, i) => (i === x ? `\x1b[33m${t}\x1b[0m` : t))
+      .join(' ')}: ${scrore}`,
+  );
 
   return scrore;
 }
@@ -159,5 +161,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  // onlyTests: true,
+  onlyTests: true,
 });
