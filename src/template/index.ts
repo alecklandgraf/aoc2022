@@ -4,6 +4,7 @@ const parseInput = (rawInput: string) => rawInput.split('\n');
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  console.log(input);
 
   return;
 };
@@ -19,7 +20,7 @@ run({
     tests: [
       // {
       //   input: ``,
-      //   expected: "",
+      //   expected: '',
       // },
     ],
     solution: part1,
@@ -28,7 +29,7 @@ run({
     tests: [
       // {
       //   input: ``,
-      //   expected: "",
+      //   expected: '',
       // },
     ],
     solution: part2,
