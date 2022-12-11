@@ -121,15 +121,25 @@ function countPathTail(input: line[]) {
         }
         currentHead = part;
       }
-      // console.log({
-      //   step: step,
-      //   head: head.toVector().join(','),
-      //   tail: tail.toVector().join(','),
-      //   diff: diff.toVector().join(','),
-      //   shouldMove: diff.toVector().map(Math.abs).includes(2),
-      // });
     }
   }
+  // catch tail up
+  for (let i = 0; i < tailLength; i++) {
+    let currentHead = tail[0];
+    for (let [i, part] of tail.entries()) {
+      const diff = currentHead.sub(part);
+      // the tail needs to move
+      if (diff.toVector().map(Math.abs).includes(2)) {
+        // handle rounding of negative numbers
+        if (diff.re === -1) diff.re = -2;
+        if (diff.im === -1) diff.im = -2;
+        tail[i] = diff.div(2).round(0).add(part);
+        if (i === tailLength - 1) visited.add(tail[i].toVector().join(','));
+      }
+      currentHead = part;
+    }
+  }
+
   // console.log(visited);
   return { visited, head, tail };
 }
@@ -168,8 +178,8 @@ const part2 = (rawInput: string) => {
   const offsetX = Math.abs(minX) + 5;
   const offsetY = Math.abs(minY) + 1;
   // printBridge(updatedVisited, maxY - minY + 2, maxX - minX + 3);
-  printBridge(visited, 25, 25, head, tail, offsetX, offsetY);
-  console.log(head.toVector(), tail, offsetX, offsetY);
+  // printBridge(visited, 25, 25, head, tail, offsetX, offsetY);
+  // console.log(head.toVector(), tail, offsetX, offsetY);
 
   return visited.size;
 };
@@ -210,5 +220,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
