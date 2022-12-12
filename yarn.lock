@@ -2,6 +2,18 @@
 # yarn lockfile v1
 
 
+"@datastructures-js/heap@^4.1.2":
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/@datastructures-js/heap/-/heap-4.1.2.tgz#85a525f5715d89f22ca3b6e5a88b444f8a4f07d7"
+  integrity sha512-Dl6MPPVXxzWsSQxIaV0sOpAx/B8r7RYUO5/GWe7GhG9v9P4QfZ1cgPSq+SoF0QJFhu9G9TmtPfRLHPWzL73GpQ==
+
+"@datastructures-js/priority-queue@^6.1.4":
+  version "6.1.4"
+  resolved "https://registry.yarnpkg.com/@datastructures-js/priority-queue/-/priority-queue-6.1.4.tgz#e452111e539835a9fd76b3daee4870b073804112"
+  integrity sha512-bYjnSSxrLjfrlnKeUID7sEzHbbtb8ENLhT/jQ4VoKTDUrJfupHr7cuaUtSFEQS1AsRCDQSaTgaNwmF8FUs9dwQ==
+  dependencies:
+    "@datastructures-js/heap" "^4.1.2"
+
 "@esbuild/android-arm@0.15.16":
   version "0.15.16"
   resolved "https://registry.yarnpkg.com/@esbuild/android-arm/-/android-arm-0.15.16.tgz#0642926178b15e3d1545efae6eee05c4f3451d15"

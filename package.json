@@ -20,6 +20,7 @@
     "prettier": "^2.4.1"
   },
   "dependencies": {
+    "@datastructures-js/priority-queue": "^6.1.4",
     "chalk": "^4.0.0",
     "complex.js": "^2.1.1",
     "lodash": "^4.17.21"
