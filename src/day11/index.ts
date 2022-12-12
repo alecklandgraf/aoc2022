@@ -1,4 +1,5 @@
 import run from 'aocrunner';
+import _ from 'lodash';
 
 const parseInput = (rawInput: string) => rawInput.split('\n');
 
@@ -11,6 +12,7 @@ class Monkey {
   divisibleBy: number;
   ifTrue: MonkeyId;
   ifFalse: MonkeyId;
+  inspectedCount = 0;
 
   constructor(
     id: number,
@@ -31,6 +33,7 @@ class Monkey {
   takeTurn() {
     const item = this.startingItems.pop();
     if (!item) return null;
+    this.inspectedCount++;
     let newItem = this.operation(item);
     newItem = Math.floor(newItem / 3);
     if (newItem % this.divisibleBy === 0) {
@@ -82,10 +85,23 @@ function parseInputMonkeys(input: string[]): Monkey[] {
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  console.log(input);
+  // console.log(input);
   const monkeys = parseInputMonkeys(input);
-  console.log(monkeys);
-  return;
+  for (let i = 0; i < 20; i++) {
+    for (let monkey of monkeys) {
+      let turn = monkey.takeTurn();
+      while (turn) {
+        monkeys[turn.monkeyId].startingItems.push(turn.value);
+        turn = monkey.takeTurn();
+      }
+    }
+  }
+  const [top, next] = _.sortBy(
+    monkeys,
+    (monkey) => monkey.inspectedCount,
+  ).reverse();
+  // console.log(top, next);
+  return top.inspectedCount * next.inspectedCount;
 };
 
 const part2 = (rawInput: string) => {
@@ -141,5 +157,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
