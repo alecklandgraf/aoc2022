@@ -30,14 +30,19 @@ class Monkey {
     this.ifFalse = ifFalse;
   }
 
-  takeTurn() {
+  takeTurn(veryWorried = false, modBy = 1) {
     const item = this.startingItems.pop();
     if (!item) return null;
     this.inspectedCount++;
     let newItem = this.operation(item);
-    newItem = Math.floor(newItem / 3);
+    newItem = veryWorried
+      ? Math.floor(newItem % modBy)
+      : Math.floor(newItem / 3);
     if (newItem % this.divisibleBy === 0) {
-      return { monkeyId: this.ifTrue, value: newItem };
+      return {
+        monkeyId: this.ifTrue,
+        value: newItem,
+      };
     }
     return { monkeyId: this.ifFalse, value: newItem };
   }
@@ -106,8 +111,26 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
-
-  return;
+  // console.log(input);
+  const monkeys = parseInputMonkeys(input);
+  const modBy = monkeys.reduce((acc, monkey) => acc * monkey.divisibleBy, 1);
+  for (let i = 0; i < 10000; i++) {
+    if (i === 1 || i === 20 || i === 1000)
+      console.log(monkeys.map((monkey) => monkey.inspectedCount));
+    for (let monkey of monkeys) {
+      let turn = monkey.takeTurn(true, modBy);
+      while (turn) {
+        monkeys[turn.monkeyId].startingItems.push(turn.value);
+        turn = monkey.takeTurn(true, modBy);
+      }
+    }
+  }
+  const [top, next] = _.sortBy(
+    monkeys,
+    (monkey) => monkey.inspectedCount,
+  ).reverse();
+  console.log(top, next);
+  return top.inspectedCount * next.inspectedCount;
 };
 
 run({
@@ -149,10 +172,37 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        Monkey 0:
+          Starting items: 79, 98
+          Operation: new = old * 19
+          Test: divisible by 23
+            If true: throw to monkey 2
+            If false: throw to monkey 3
+
+        Monkey 1:
+          Starting items: 54, 65, 75, 74
+          Operation: new = old + 6
+          Test: divisible by 19
+            If true: throw to monkey 2
+            If false: throw to monkey 0
+
+        Monkey 2:
+          Starting items: 79, 60, 97
+          Operation: new = old * old
+          Test: divisible by 13
+            If true: throw to monkey 1
+            If false: throw to monkey 3
+
+        Monkey 3:
+          Starting items: 74
+          Operation: new = old + 3
+          Test: divisible by 17
+            If true: throw to monkey 0
+            If false: throw to monkey 1`,
+        expected: 2713310158,
+      },
     ],
     solution: part2,
   },
