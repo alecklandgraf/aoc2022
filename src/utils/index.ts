@@ -30,6 +30,7 @@
  *
  */
 
+// set functions
 export function symmetricDifference<T>(setA: Set<T>, setB: Set<T>) {
   const _difference = new Set(setA);
   for (const elem of setB) {
@@ -205,4 +206,12 @@ export function findShortestPathWithLogs(
   };
 
   return results;
+}
+
+export function getNumberFromString(str: string) {
+  return Number(str.replace(/\D/g, ''));
+}
+
+export function getNumbersFromString(str: string) {
+  return str.match(/\d+/g)?.map(Number) || [];
 }
