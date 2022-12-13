@@ -99,7 +99,7 @@ const part1 = (rawInput: string) => {
     (current, neighbor) =>
       current.cost <= neighbor.cost && neighbor.cost - current.cost > 1,
   );
-  printGrid(grid, new Set(path));
+  // printGrid(grid, new Set(path));
   // console.log(
   //   'path',
   //   path.map(({ x, y, debug }) => `[${debug}](${x},${y})`).join(' -> '),
@@ -109,10 +109,46 @@ const part1 = (rawInput: string) => {
   return path.length - 1;
 };
 
+function resetGrid(grid: Node[][]) {
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      grid[y][x].f = Infinity;
+      grid[y][x].g = Infinity;
+      grid[y][x].h = Infinity;
+      grid[y][x].parent = null;
+    }
+  }
+}
+
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  const { grid, end } = createGrid(input);
+  const starts: Node[] = [];
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      if (grid[y][x].debug === 'a') {
+        starts.push(grid[y][x]);
+      }
+    }
+  }
+  let minPath = 1000;
+  for (let start of starts) {
+    resetGrid(grid);
+    const path = aStar(
+      grid,
+      start!,
+      end!,
+      manhattanDistance,
+      (current, neighbor) =>
+        current.cost <= neighbor.cost && neighbor.cost - current.cost > 1,
+    );
+    // some starts don't have a path, []
+    if (path.length && path.length - 1 < minPath) {
+      minPath = path.length - 1;
+    }
+  }
 
-  return;
+  return minPath;
 };
 
 run({
@@ -132,10 +168,15 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        Sabqponm
+        abcryxxl
+        accszExk
+        acctuvwj
+        abdefghi`,
+        expected: 29,
+      },
     ],
     solution: part2,
   },

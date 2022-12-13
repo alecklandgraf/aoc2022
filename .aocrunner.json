@@ -162,13 +162,13 @@
         "solved": true,
         "result": "361",
         "attempts": [],
-        "time": 32.116655
+        "time": 35.734724
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "354",
         "attempts": [],
-        "time": null
+        "time": 80.239787
       }
     },
     {
