@@ -1,7 +1,25 @@
 import run from 'aocrunner';
-import { aStar, Node, manhattanDistance } from '../utils/index.js';
+import chalk from 'chalk';
+
+import { interpolateGnBu } from 'd3-scale-chromatic';
+import {
+  aStar,
+  Node,
+  manhattanDistance,
+  getNumbersFromString,
+} from '../utils/index.js';
 
 const parseInput = (rawInput: string) => rawInput.split('\n');
+
+function colorTuple(rbgs: number[]): [number, number, number] {
+  return [rbgs[0], rbgs[1], rbgs[2]];
+}
+
+function colorize(str: string, weight: number) {
+  return chalk.rgb(
+    ...colorTuple(getNumbersFromString(interpolateGnBu(1 - weight / 26))),
+  )(str);
+}
 
 function createGrid(input: string[]) {
   const grid: Node[][] = [];
@@ -50,20 +68,20 @@ function printGrid(grid: Node[][], path: Set<Node>) {
         const node = grid[y][x];
         const child = children.get(node);
         if (node.debug === 'S') {
-          line += 'S';
+          line += colorize('S', 0);
         } else if (node.debug === 'E') {
-          line += 'E';
+          line += colorize('E', 26);
         } else if (child?.x === x && child?.y === y - 1) {
-          line += '^';
+          line += colorize('^', node.cost);
         } else if (child?.x === x && child?.y === y + 1) {
-          line += 'v';
+          line += colorize('v', node.cost);
         } else if (child?.x === x - 1 && child?.y === y) {
-          line += '<';
+          line += colorize('<', node.cost);
         } else if (child?.x === x + 1 && child?.y === y) {
-          line += '>';
+          line += colorize('>', node.cost);
         }
       } else {
-        line += '.';
+        line += ' ';
       }
     }
     console.log(line);
@@ -86,6 +104,8 @@ const part1 = (rawInput: string) => {
   //   'path',
   //   path.map(({ x, y, debug }) => `[${debug}](${x},${y})`).join(' -> '),
   // );
+
+  console.log(colorize('test', 2));
   return path.length - 1;
 };
 

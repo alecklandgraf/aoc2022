@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.1.4",
+    "@types/d3-scale-chromatic": "^3.0.0",
     "chalk": "^4.0.0",
     "complex.js": "^2.1.1",
+    "d3-scale-chromatic": "^3.0.0",
     "lodash": "^4.17.21"
   },
   "engines": {
