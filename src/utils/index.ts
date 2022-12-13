@@ -300,16 +300,15 @@ export function aStar(
   start: Node,
   end: Node,
   heuristic = manhattanDistance,
-) {
+): Node[] {
   let open = new PriorityQueue<Node>(compareNodes);
   start.h = heuristic(start, end);
   start.f = start.g + start.h;
   open.enqueue(start);
-  let step = 0;
+
   while (open.size()) {
     const current = open.dequeue()!;
     if (current === end) {
-      // should be able to get path from curren.parent.parent...
       let path = [current];
       let pathCurrent = current;
       while (pathCurrent.parent) {
@@ -320,38 +319,7 @@ export function aStar(
     }
     current.closed = true;
     const neighbors = neighbors4(current, grid);
-    let log = false;
-    // if (step < 4 || (current.x === 2 && current.y === 3)) {
-    //   log = true;
-    // }
-
-    step++;
-    log &&
-      console.log(
-        'step:',
-        step,
-        'current:',
-        printNode(current),
-        'neighbors: \n',
-        neighbors
-          .map((n, i) =>
-            printNode(n, { includeCosts: false, indent: i === 0 ? 3 : 4 }),
-          )
-          .join('\n'),
-      );
     for (const neighbor of neighbors) {
-      // if (log) {
-      //   console.log(
-      //     'neighbor',
-      //     neighbor.cost,
-      //     'current',
-      //     current.cost,
-      //     'close',
-      //     neighbor.closed || false,
-      //     'test',
-      //     current.cost <= neighbor.cost && neighbor.cost - current.cost > 1,
-      //   );
-      // }
       // if neighbor is not traverable or neighbor is closed, skip
       if (
         neighbor.closed ||
@@ -365,15 +333,7 @@ export function aStar(
       // TLDR: all valid moves have a cost of 1
       const gScore = current.g + 1;
       const beenVisited = neighbor.visited;
-      if (log) {
-        console.log(
-          'checks',
-          printNode(neighbor, { includeCosts: false }),
-          'gScore',
-          gScore,
-          beenVisited,
-        );
-      }
+
       if (!beenVisited || gScore < neighbor.g) {
         neighbor.g = gScore;
         neighbor.h = heuristic(neighbor, end);
@@ -386,9 +346,8 @@ export function aStar(
           // time to reheapify since we just updated neighbor.f
           open = PriorityQueue.fromArray<Node>(open.toArray(), compareNodes);
         }
-        log && console.log('neighbor:', printNode(neighbor));
       }
     }
   }
-  return [] as Node[];
+  return [];
 }
