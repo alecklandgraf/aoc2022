@@ -234,13 +234,13 @@ export function neighbors4({ x, y }: Point | Node, grid?: Node[][]) {
   if (grid) {
     return [
       // West
-      grid[x - 1]?.[y],
+      grid[y]?.[x - 1],
       // East
-      grid[x + 1]?.[y],
+      grid[y]?.[x + 1],
       // South
-      grid[x]?.[y - 1],
+      grid[y - 1]?.[x],
       // North
-      grid[x]?.[y + 1],
+      grid[y + 1]?.[x],
     ].filter(Boolean);
   }
   return [
@@ -279,7 +279,7 @@ function printNode(
   { includeCosts = true, indent = 0 }: PrintNodeOptions = {},
 ) {
   const out = `<${node.debug} - (${node.x}, ${node.y})${
-    includeCosts ? ` [${node.f}, ${node.g}, ${node.h}]` : ''
+    includeCosts ? ` [${node.f} = ${node.g} + ${node.h}]` : ''
   }, Parent: ${
     node.parent
       ? `${node.parent.debug}(${node.parent.x},${node.parent.y})`
@@ -310,14 +310,20 @@ export function aStar(
     const current = open.dequeue()!;
     if (current === end) {
       // should be able to get path from curren.parent.parent...
-      return current;
+      let path = [current];
+      let pathCurrent = current;
+      while (pathCurrent.parent) {
+        pathCurrent = pathCurrent.parent;
+        path.push(pathCurrent);
+      }
+      return path;
     }
     current.closed = true;
     const neighbors = neighbors4(current, grid);
     let log = false;
-    if (step < 4 || (current.x === 2 && current.y === 3)) {
-      log = true;
-    }
+    // if (step < 4 || (current.x === 2 && current.y === 3)) {
+    //   log = true;
+    // }
 
     step++;
     log &&
@@ -362,7 +368,7 @@ export function aStar(
       if (log) {
         console.log(
           'checks',
-          printNode(neighbor, false),
+          printNode(neighbor, { includeCosts: false }),
           'gScore',
           gScore,
           beenVisited,
@@ -384,5 +390,5 @@ export function aStar(
       }
     }
   }
-  return grid.map((node) => node.map((n) => printNode(n, false)));
+  return [] as Node[];
 }

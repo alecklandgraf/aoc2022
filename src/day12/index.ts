@@ -40,8 +40,11 @@ const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const { start, grid, end } = createGrid(input);
   const path = aStar(grid, start!, end!);
-  console.log('path', path);
-  return;
+  console.log(
+    'path',
+    path.map(({ x, y, debug }) => `[${debug}](${x},${y})`).join(' -> '),
+  );
+  return path.length - 1;
 };
 
 const part2 = (rawInput: string) => {
@@ -75,5 +78,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
