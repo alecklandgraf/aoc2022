@@ -1,5 +1,5 @@
 import run from 'aocrunner';
-import { aStar, Node } from '../utils/index.js';
+import { aStar, Node, manhattanDistance } from '../utils/index.js';
 
 const parseInput = (rawInput: string) => rawInput.split('\n');
 
@@ -39,11 +39,18 @@ function createGrid(input: string[]) {
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const { start, grid, end } = createGrid(input);
-  const path = aStar(grid, start!, end!);
-  console.log(
-    'path',
-    path.map(({ x, y, debug }) => `[${debug}](${x},${y})`).join(' -> '),
+  const path = aStar(
+    grid,
+    start!,
+    end!,
+    manhattanDistance,
+    (current, neighbor) =>
+      current.cost <= neighbor.cost && neighbor.cost - current.cost > 1,
   );
+  // console.log(
+  //   'path',
+  //   path.map(({ x, y, debug }) => `[${debug}](${x},${y})`).join(' -> '),
+  // );
   return path.length - 1;
 };
 

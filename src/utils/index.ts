@@ -262,10 +262,6 @@ export interface Node extends Point {
   cost: number;
   /** Parent node */
   parent: Node | null;
-  /** visited */
-  visited?: boolean;
-  /** closed */
-  closed?: boolean;
   /** Add any debug data here for logging */
   debug?: any;
 }
@@ -300,8 +296,12 @@ export function aStar(
   start: Node,
   end: Node,
   heuristic = manhattanDistance,
+  isWall: (current: Node, neighbor: Node) => boolean = (current, neighbor) =>
+    neighbor.cost === 1,
 ): Node[] {
   let open = new PriorityQueue<Node>(compareNodes);
+  const closed = new Set<Node>();
+  const visited = new Set<Node>();
   start.h = heuristic(start, end);
   start.f = start.g + start.h;
   open.enqueue(start);
@@ -317,14 +317,11 @@ export function aStar(
       }
       return path;
     }
-    current.closed = true;
+    closed.add(current);
     const neighbors = neighbors4(current, grid);
     for (const neighbor of neighbors) {
       // if neighbor is not traverable or neighbor is closed, skip
-      if (
-        neighbor.closed ||
-        (current.cost <= neighbor.cost && neighbor.cost - current.cost > 1) // this condition to be a function, isWall(neighbor, current)
-      ) {
+      if (closed.has(neighbor) || isWall(current, neighbor)) {
         continue;
       }
       // if new path to neighbor is shorter or neighbor has not been visited yet
@@ -332,14 +329,14 @@ export function aStar(
       // the cost to mark walls and weight the traversability of move which is checked above.
       // TLDR: all valid moves have a cost of 1
       const gScore = current.g + 1;
-      const beenVisited = neighbor.visited;
+      const beenVisited = visited.has(neighbor);
 
       if (!beenVisited || gScore < neighbor.g) {
         neighbor.g = gScore;
         neighbor.h = heuristic(neighbor, end);
         neighbor.f = neighbor.g + neighbor.h;
         neighbor.parent = current;
-        neighbor.visited = true;
+        visited.add(neighbor);
         if (!beenVisited) {
           open.enqueue(neighbor);
         } else {
