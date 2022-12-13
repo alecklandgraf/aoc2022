@@ -30,6 +30,8 @@
  *
  */
 
+import { PriorityQueue } from '@datastructures-js/priority-queue';
+
 // set functions
 export function symmetricDifference<T>(setA: Set<T>, setB: Set<T>) {
   const _difference = new Set(setA);
@@ -214,4 +216,173 @@ export function getNumberFromString(str: string) {
 
 export function getNumbersFromString(str: string) {
   return str.match(/\d+/g)?.map(Number) || [];
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+// this is the heuristic function, more at http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+export function manhattanDistance(a: Point, b: Point, minCost = 1) {
+  return minCost * (Math.abs(a.x - b.x) + Math.abs(a.y - b.y));
+}
+
+export function neighbors4(point: Point): number[][];
+export function neighbors4(point: Node, grid: Node[][]): Node[];
+export function neighbors4({ x, y }: Point | Node, grid?: Node[][]) {
+  if (grid) {
+    return [
+      // West
+      grid[x - 1]?.[y],
+      // East
+      grid[x + 1]?.[y],
+      // South
+      grid[x]?.[y - 1],
+      // North
+      grid[x]?.[y + 1],
+    ].filter(Boolean);
+  }
+  return [
+    [x - 1, y],
+    [x + 1, y],
+    [x, y - 1],
+    [x, y + 1],
+  ];
+}
+
+export interface Node extends Point {
+  /** F-cost: G-cost + H-cost */
+  f: number;
+  /** G-cost: distance from start */
+  g: number;
+  /** H-cost: distance to end (heuristic) */
+  h: number;
+  /** cost: used to mark walls or weight the traversability of move */
+  cost: number;
+  /** Parent node */
+  parent: Node | null;
+  /** visited */
+  visited?: boolean;
+  /** closed */
+  closed?: boolean;
+  /** Add any debug data here for logging */
+  debug?: any;
+}
+
+interface PrintNodeOptions {
+  includeCosts?: boolean;
+  indent?: number;
+}
+function printNode(
+  node: Node,
+  { includeCosts = true, indent = 0 }: PrintNodeOptions = {},
+) {
+  const out = `<${node.debug} - (${node.x}, ${node.y})${
+    includeCosts ? ` [${node.f}, ${node.g}, ${node.h}]` : ''
+  }, Parent: ${
+    node.parent
+      ? `${node.parent.debug}(${node.parent.x},${node.parent.y})`
+      : '?'
+  }>`;
+  return out.padStart(out.length + indent);
+}
+
+function compareNodes(a: Node, b: Node) {
+  if (a.f === b.f) {
+    return a.h - b.h;
+  }
+  return a.f - b.f;
+}
+
+export function aStar(
+  grid: Node[][],
+  start: Node,
+  end: Node,
+  heuristic = manhattanDistance,
+) {
+  let open = new PriorityQueue<Node>(compareNodes);
+  start.h = heuristic(start, end);
+  start.f = start.g + start.h;
+  open.enqueue(start);
+  let step = 0;
+  while (open.size()) {
+    const current = open.dequeue()!;
+    if (current === end) {
+      // should be able to get path from curren.parent.parent...
+      return current;
+    }
+    current.closed = true;
+    const neighbors = neighbors4(current, grid);
+    let log = false;
+    if (step < 4 || (current.x === 2 && current.y === 3)) {
+      log = true;
+    }
+
+    step++;
+    log &&
+      console.log(
+        'step:',
+        step,
+        'current:',
+        printNode(current),
+        'neighbors: \n',
+        neighbors
+          .map((n, i) =>
+            printNode(n, { includeCosts: false, indent: i === 0 ? 3 : 4 }),
+          )
+          .join('\n'),
+      );
+    for (const neighbor of neighbors) {
+      // if (log) {
+      //   console.log(
+      //     'neighbor',
+      //     neighbor.cost,
+      //     'current',
+      //     current.cost,
+      //     'close',
+      //     neighbor.closed || false,
+      //     'test',
+      //     current.cost <= neighbor.cost && neighbor.cost - current.cost > 1,
+      //   );
+      // }
+      // if neighbor is not traverable or neighbor is closed, skip
+      if (
+        neighbor.closed ||
+        (current.cost <= neighbor.cost && neighbor.cost - current.cost > 1) // this condition to be a function, isWall(neighbor, current)
+      ) {
+        continue;
+      }
+      // if new path to neighbor is shorter or neighbor has not been visited yet
+      // normaly you would add the cost of the neighbor to the current.g, but here we are using
+      // the cost to mark walls and weight the traversability of move which is checked above.
+      // TLDR: all valid moves have a cost of 1
+      const gScore = current.g + 1;
+      const beenVisited = neighbor.visited;
+      if (log) {
+        console.log(
+          'checks',
+          printNode(neighbor, false),
+          'gScore',
+          gScore,
+          beenVisited,
+        );
+      }
+      if (!beenVisited || gScore < neighbor.g) {
+        neighbor.g = gScore;
+        neighbor.h = heuristic(neighbor, end);
+        neighbor.f = neighbor.g + neighbor.h;
+        neighbor.parent = current;
+        neighbor.visited = true;
+        if (!beenVisited) {
+          open.enqueue(neighbor);
+        } else {
+          // time to reheapify since we just updated neighbor.f
+          open = PriorityQueue.fromArray<Node>(open.toArray(), compareNodes);
+        }
+        log && console.log('neighbor:', printNode(neighbor));
+      }
+    }
+  }
+  return grid.map((node) => node.map((n) => printNode(n, false)));
 }
