@@ -15,44 +15,47 @@ function comparePair(
   right: NestedNumbers,
 ): boolean | typeof CONTINUE {
   for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    if (i >= left.length) {
+      return true;
+    }
+    if (i >= right.length) {
+      return false;
+    }
     let leftPacket = left[i];
     let rightPacket = right[i];
-    if (Array.isArray(leftPacket) || Array.isArray(rightPacket)) {
-      if (!Array.isArray(leftPacket)) {
-        leftPacket = [leftPacket];
+    if (Number.isFinite(leftPacket) && Number.isFinite(rightPacket)) {
+      if (leftPacket === rightPacket) {
+        continue;
       }
-      if (!Array.isArray(rightPacket)) {
-        rightPacket = [rightPacket];
-      }
-      if (rightPacket.length === 0) {
-        return false;
-      }
-      if (leftPacket.length === 0) {
+      if (leftPacket < rightPacket) {
         return true;
       }
+      if (leftPacket > rightPacket) {
+        return false;
+      }
+    } else if (Array.isArray(leftPacket) && Array.isArray(rightPacket)) {
       const result = comparePair(leftPacket, rightPacket);
-      // console.log({ result });
+      if (result === CONTINUE) {
+        continue;
+      }
+      return result;
+    } else if (!Array.isArray(leftPacket)) {
+      leftPacket = [leftPacket];
+      const result = comparePair(leftPacket, rightPacket as NestedNumbers);
+      if (result === CONTINUE) {
+        continue;
+      }
+      return result;
+    } else if (!Array.isArray(rightPacket)) {
+      rightPacket = [rightPacket];
+      const result = comparePair(leftPacket, rightPacket);
       if (result === CONTINUE) {
         continue;
       }
       return result;
     }
+
     // console.log({ leftPacket, rightPacket, i });
-    if (leftPacket === rightPacket) {
-      continue;
-    }
-    if (rightPacket === undefined) {
-      return false;
-    }
-    if (leftPacket === undefined) {
-      return true;
-    }
-    if (leftPacket < rightPacket) {
-      return true;
-    }
-    if (leftPacket > rightPacket) {
-      return false;
-    }
   }
   return CONTINUE;
 }
@@ -85,14 +88,13 @@ const part1 = (rawInput: string) => {
   const pairs = createPairs(input);
 
   // console.log(pairs);
-  let i = 1;
-  for (let { left, right } of pairs) {
+  for (let i = 0; i < pairs.length; i++) {
+    const { left, right } = pairs[i];
     const inOrder = comparePair(left, right);
     // console.log(i, left, '|', right, inOrder);
     if (inOrder) {
-      sum += i;
+      sum += i + 1;
     }
-    i++;
   }
 
   return sum;
