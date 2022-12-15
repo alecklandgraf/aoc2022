@@ -24,6 +24,12 @@ function comparePair(
       if (!Array.isArray(rightPacket)) {
         rightPacket = [rightPacket];
       }
+      if (rightPacket.length === 0) {
+        return false;
+      }
+      if (leftPacket.length === 0) {
+        return true;
+      }
       const result = comparePair(leftPacket, rightPacket);
       // console.log({ result });
       if (result === CONTINUE) {
@@ -79,12 +85,14 @@ const part1 = (rawInput: string) => {
   const pairs = createPairs(input);
 
   // console.log(pairs);
+  let i = 1;
   for (let { left, right } of pairs) {
     const inOrder = comparePair(left, right);
-    console.log(left, '|', right, inOrder);
+    // console.log(i, left, '|', right, inOrder);
     if (inOrder) {
-      sum += 1;
+      sum += i;
     }
+    i++;
   }
 
   return sum;
@@ -139,5 +147,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
