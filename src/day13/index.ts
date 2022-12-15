@@ -102,8 +102,19 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  const pairs = createPairs(input);
+  const packets: NestedNumbers[] = [];
+  for (let { left, right } of pairs) {
+    packets.push(left, right);
+  }
+  packets.push([[2]], [[6]]);
 
-  return;
+  const sortedPackets = packets.sort((a, b) => (comparePair(a, b) ? -1 : 1));
+  console.log(sortedPackets);
+  const index1 = sortedPackets.findIndex((p) => _.isEqual(p, [[2]])) + 1;
+  const index2 = sortedPackets.findIndex((p) => _.isEqual(p, [[6]])) + 1;
+
+  return index1 * index2;
 };
 
 run({
@@ -141,10 +152,33 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        [1,1,3,1,1]
+        [1,1,5,1,1]
+
+        [[1],[2,3,4]]
+        [[1],4]
+
+        [9]
+        [[8,7,6]]
+
+        [[4,4],4,4]
+        [[4,4],4,4,4]
+
+        [7,7,7,7]
+        [7,7,7]
+
+        []
+        [3]
+
+        [[[]]]
+        [[]]
+
+        [1,[2,[3,[4,[5,6,7]]]],8,9]
+        [1,[2,[3,[4,[5,6,0]]]],8,9]`,
+        expected: 140,
+      },
     ],
     solution: part2,
   },

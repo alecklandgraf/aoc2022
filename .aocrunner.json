@@ -179,13 +179,13 @@
           "5220",
           "5448"
         ],
-        "time": 0.754503
+        "time": 1.683554
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "23391",
         "attempts": [],
-        "time": null
+        "time": 7.139592
       }
     },
     {
