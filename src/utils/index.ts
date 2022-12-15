@@ -215,7 +215,7 @@ export function getNumberFromString(str: string) {
 }
 
 export function getNumbersFromString(str: string) {
-  return str.match(/\d+/g)?.map(Number) || [];
+  return str.match(/(-?\d+)/g)?.map(Number) || [];
 }
 
 interface Point {
