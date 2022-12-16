@@ -36,7 +36,22 @@ function parseInputToSensors(input: string[]) {
     const [sx, sy, bx, by] = getNumbersFromString(line);
     sensors.push(new Sensor(sx, sy, new Beacon(bx, by)));
   }
+
   return sensors;
+}
+function sensorReachRow(
+  sensor: Sensor,
+  y: number,
+  minX: number,
+  maxX: number,
+  row: Set<string>,
+): Set<string> {
+  for (let x = minX; x <= maxX; x++) {
+    if (manhattanDistance(sensor, { x, y }) <= sensor.distance) {
+      row.add(`(${x},${y})`);
+    }
+  }
+  return row;
 }
 
 const part1 = (rawInput: string) => {
@@ -57,8 +72,20 @@ const part1 = (rawInput: string) => {
   );
   const maxDistance = Math.max(...sensors.map((sensor) => sensor.distance));
 
-  console.log({ minX, maxX, minY, maxY });
-  return;
+  // console.log({ minX, maxX, minY, maxY });
+  console.log(sensors);
+  const rowToCheck = 10;
+  const row = new Set<string>();
+  for (const sensor of sensors) {
+    sensorReachRow(sensor, rowToCheck, minX, maxX, row);
+  }
+  for (const sensor of sensors) {
+    if (row.has(sensor.beacon.toString())) {
+      row.delete(sensor.beacon.toString());
+    }
+  }
+  // console.log(row);
+  return row.size;
 };
 
 const part2 = (rawInput: string) => {
@@ -101,5 +128,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  // onlyTests: true,
+  onlyTests: true,
 });
