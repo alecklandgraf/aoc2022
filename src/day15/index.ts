@@ -36,6 +36,7 @@ function parseInputToSensors(input: string[], y: number) {
   for (const line of input) {
     const [sx, sy, bx, by] = getNumbersFromString(line);
     sensors.push(new Sensor(sx, sy, new Beacon(bx, by)));
+
     if (by === y) beacons.add(bx);
   }
 
@@ -49,36 +50,39 @@ function sensorReachRow(
   maxDistance: number,
   row: Set<number>,
   beacons: Set<number>,
-): Set<number> {
-  for (let x = minX - maxDistance - 1; x <= maxX + maxDistance + 1; x++) {
-    if (
-      manhattanDistance(sensor, { x, y }) <= sensor.distance &&
-      !beacons.has(x)
-    ) {
+) {
+  const distanceToRow = manhattanDistance(sensor, { x: sensor.x, y });
+  if (distanceToRow > sensor.distance) return;
+  const range = sensor.distance - distanceToRow;
+  for (let x = sensor.x - range; x <= sensor.x + range; x++) {
+    if (!beacons.has(x)) {
       row.add(x);
     }
   }
-  return row;
 }
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   // console.log(input);
-  const rowToCheck = input.length > 1000 ? 2000000 : 9;
+  const rowToCheck =
+    input[0] === 'Sensor at x=2, y=18: closest beacon is at x=-2, y=15'
+      ? 10
+      : 2000000;
+
   const { sensors, beacons } = parseInputToSensors(input, rowToCheck);
-  const minX = Math.min(
-    ...sensors.map((sensor) => Math.min(sensor.x, sensor.beacon.x)),
-  );
-  const maxX = Math.max(
-    ...sensors.map((sensor) => Math.max(sensor.x, sensor.beacon.x)),
-  );
-  const minY = Math.min(
-    ...sensors.map((sensor) => Math.min(sensor.y, sensor.beacon.y)),
-  );
-  const maxY = Math.max(
-    ...sensors.map((sensor) => Math.max(sensor.y, sensor.beacon.y)),
-  );
-  const maxDistance = Math.max(...sensors.map((sensor) => sensor.distance));
+  // const minX = Math.min(
+  //   ...sensors.map((sensor) => Math.min(sensor.x, sensor.beacon.x)),
+  // );
+  // const maxX = Math.max(
+  //   ...sensors.map((sensor) => Math.max(sensor.x, sensor.beacon.x)),
+  // );
+  // const minY = Math.min(
+  //   ...sensors.map((sensor) => Math.min(sensor.y, sensor.beacon.y)),
+  // );
+  // const maxY = Math.max(
+  //   ...sensors.map((sensor) => Math.max(sensor.y, sensor.beacon.y)),
+  // );
+  // const maxDistance = Math.max(...sensors.map((sensor) => sensor.distance));
 
   // console.log({ minX, maxX, minY, maxY, maxDistance });
   // console.log(sensors);
@@ -86,10 +90,12 @@ const part1 = (rawInput: string) => {
   const row = new Set<number>();
 
   for (const sensor of sensors) {
-    sensorReachRow(sensor, rowToCheck, minX, maxX, maxDistance, row, beacons);
+    // console.log(sensor);
+    sensorReachRow(sensor, rowToCheck, 0, 0, 0, row, beacons);
   }
-  // console.log(beacons, row);
-
+  // for (const sensor of sensors) {
+  //   if (sensor.y === rowToCheck && row.has(sensor.x)) row.delete(sensor.x);
+  // }
   return row.size;
 };
 
