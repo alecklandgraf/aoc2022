@@ -211,13 +211,13 @@
           "5379909",
           "5379907"
         ],
-        "time": 2037.867809
+        "time": 2131.66662
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "13134039205729",
         "attempts": [],
-        "time": null
+        "time": 3093.089396
       }
     },
     {

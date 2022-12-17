@@ -58,6 +58,38 @@ function sensorReachRow(
   }
 }
 
+function calculateRanges(sensors: Sensor[], y: number) {
+  const ranges = [];
+  for (const sensor of sensors) {
+    const distanceToRow = manhattanDistance(sensor, { x: sensor.x, y });
+    if (distanceToRow > sensor.distance) continue;
+    const range = sensor.distance - distanceToRow;
+    ranges.push([sensor.x - range, sensor.x + range]);
+  }
+  return ranges;
+}
+
+/**
+ * https://javascript.plainenglish.io/javascript-algorithms-merge-intervals-leetcode-98da240805bc
+ */
+function mergeRanges(ranges: number[][]) {
+  const mergedRanges: number[][] = [];
+  ranges.sort((a, b) => a[0] - b[0]);
+  let previous = ranges[0];
+  for (let i = 1; i < ranges.length; i += 1) {
+    // I added a `+ 1` here to make integer ranges inclusive: [ -2, 3 ], [ 4, 26 ] => [ -2, 26 ]
+    if (previous[1] + 1 >= ranges[i][0]) {
+      previous = [previous[0], Math.max(previous[1], ranges[i][1])];
+    } else {
+      mergedRanges.push(previous);
+      previous = ranges[i];
+    }
+  }
+
+  mergedRanges.push(previous);
+  return mergedRanges;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const rowToCheck =
@@ -73,12 +105,34 @@ const part1 = (rawInput: string) => {
     // console.log(sensor);
     sensorReachRow(sensor, rowToCheck, row, beacons);
   }
+  // console.log('row', row);
 
   return row.size;
 };
 
 const part2 = (rawInput: string) => {
+  const frequency = 4000000;
   const input = parseInput(rawInput);
+  const { sensors, beacons } = parseInputToSensors(input, 10);
+  const ranges = calculateRanges(sensors, 10);
+  // console.log({
+  //   ranges: _.sortBy(ranges, ([x]) => x),
+  //   mergedRanges: mergeRanges(ranges),
+  // });
+  const mergedRanges = mergeRanges(_.sortBy(ranges, ([x]) => x))[0];
+  let sensor: Sensor;
+  const upperBound =
+    input[0] === 'Sensor at x=2, y=18: closest beacon is at x=-2, y=15'
+      ? 20
+      : 4000000;
+  for (let i = 0; i <= upperBound; i++) {
+    const mergedRanges = mergeRanges(mergeRanges(calculateRanges(sensors, i)));
+    // a more exhaustive check would be to check the bounds [0, upperBound] and see if the mergedRanges has a gap
+    if (mergedRanges.length > 1) {
+      console.log(i, mergedRanges);
+      return (mergedRanges[0][1] + 1) * frequency + i;
+    }
+  }
 
   return;
 };
@@ -109,13 +163,27 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+        Sensor at x=9, y=16: closest beacon is at x=10, y=16
+        Sensor at x=13, y=2: closest beacon is at x=15, y=3
+        Sensor at x=12, y=14: closest beacon is at x=10, y=16
+        Sensor at x=10, y=20: closest beacon is at x=10, y=16
+        Sensor at x=14, y=17: closest beacon is at x=10, y=16
+        Sensor at x=8, y=7: closest beacon is at x=2, y=10
+        Sensor at x=2, y=0: closest beacon is at x=2, y=10
+        Sensor at x=0, y=11: closest beacon is at x=2, y=10
+        Sensor at x=20, y=14: closest beacon is at x=25, y=17
+        Sensor at x=17, y=20: closest beacon is at x=21, y=22
+        Sensor at x=16, y=7: closest beacon is at x=15, y=3
+        Sensor at x=14, y=3: closest beacon is at x=15, y=3
+        Sensor at x=20, y=1: closest beacon is at x=15, y=3`,
+        expected: 56000011,
+      },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
