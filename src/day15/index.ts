@@ -30,25 +30,32 @@ class Sensor extends Point {
   }
 }
 
-function parseInputToSensors(input: string[]) {
+function parseInputToSensors(input: string[], y: number) {
   const sensors = [];
+  const beacons: Set<number> = new Set();
   for (const line of input) {
     const [sx, sy, bx, by] = getNumbersFromString(line);
     sensors.push(new Sensor(sx, sy, new Beacon(bx, by)));
+    if (by === y) beacons.add(bx);
   }
 
-  return sensors;
+  return { sensors, beacons };
 }
 function sensorReachRow(
   sensor: Sensor,
   y: number,
   minX: number,
   maxX: number,
-  row: Set<string>,
-): Set<string> {
-  for (let x = minX; x <= maxX; x++) {
-    if (manhattanDistance(sensor, { x, y }) <= sensor.distance) {
-      row.add(`(${x},${y})`);
+  maxDistance: number,
+  row: Set<number>,
+  beacons: Set<number>,
+): Set<number> {
+  for (let x = minX - maxDistance - 1; x <= maxX + maxDistance + 1; x++) {
+    if (
+      manhattanDistance(sensor, { x, y }) <= sensor.distance &&
+      !beacons.has(x)
+    ) {
+      row.add(x);
     }
   }
   return row;
@@ -57,7 +64,8 @@ function sensorReachRow(
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   // console.log(input);
-  const sensors = parseInputToSensors(input);
+  const rowToCheck = input.length > 1000 ? 2000000 : 9;
+  const { sensors, beacons } = parseInputToSensors(input, rowToCheck);
   const minX = Math.min(
     ...sensors.map((sensor) => Math.min(sensor.x, sensor.beacon.x)),
   );
@@ -72,19 +80,16 @@ const part1 = (rawInput: string) => {
   );
   const maxDistance = Math.max(...sensors.map((sensor) => sensor.distance));
 
-  // console.log({ minX, maxX, minY, maxY });
-  console.log(sensors);
-  const rowToCheck = 10;
-  const row = new Set<string>();
+  // console.log({ minX, maxX, minY, maxY, maxDistance });
+  // console.log(sensors);
+
+  const row = new Set<number>();
+
   for (const sensor of sensors) {
-    sensorReachRow(sensor, rowToCheck, minX, maxX, row);
+    sensorReachRow(sensor, rowToCheck, minX, maxX, maxDistance, row, beacons);
   }
-  for (const sensor of sensors) {
-    if (row.has(sensor.beacon.toString())) {
-      row.delete(sensor.beacon.toString());
-    }
-  }
-  // console.log(row);
+  // console.log(beacons, row);
+
   return row.size;
 };
 
@@ -128,5 +133,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
