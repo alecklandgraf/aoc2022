@@ -45,9 +45,6 @@ function parseInputToSensors(input: string[], y: number) {
 function sensorReachRow(
   sensor: Sensor,
   y: number,
-  minX: number,
-  maxX: number,
-  maxDistance: number,
   row: Set<number>,
   beacons: Set<number>,
 ) {
@@ -63,39 +60,20 @@ function sensorReachRow(
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  // console.log(input);
   const rowToCheck =
     input[0] === 'Sensor at x=2, y=18: closest beacon is at x=-2, y=15'
       ? 10
       : 2000000;
 
   const { sensors, beacons } = parseInputToSensors(input, rowToCheck);
-  // const minX = Math.min(
-  //   ...sensors.map((sensor) => Math.min(sensor.x, sensor.beacon.x)),
-  // );
-  // const maxX = Math.max(
-  //   ...sensors.map((sensor) => Math.max(sensor.x, sensor.beacon.x)),
-  // );
-  // const minY = Math.min(
-  //   ...sensors.map((sensor) => Math.min(sensor.y, sensor.beacon.y)),
-  // );
-  // const maxY = Math.max(
-  //   ...sensors.map((sensor) => Math.max(sensor.y, sensor.beacon.y)),
-  // );
-  // const maxDistance = Math.max(...sensors.map((sensor) => sensor.distance));
-
-  // console.log({ minX, maxX, minY, maxY, maxDistance });
-  // console.log(sensors);
 
   const row = new Set<number>();
 
   for (const sensor of sensors) {
     // console.log(sensor);
-    sensorReachRow(sensor, rowToCheck, 0, 0, 0, row, beacons);
+    sensorReachRow(sensor, rowToCheck, row, beacons);
   }
-  // for (const sensor of sensors) {
-  //   if (sensor.y === rowToCheck && row.has(sensor.x)) row.delete(sensor.x);
-  // }
+
   return row.size;
 };
 
@@ -139,5 +117,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  // onlyTests: true,
+  onlyTests: true,
 });
