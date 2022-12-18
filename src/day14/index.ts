@@ -54,21 +54,29 @@ function printCave(cave: Set<string>, startingPoint: Point) {
 function findBottom(
   cave: Set<string>,
   sandLocation: Point,
+  infiniteFloor?: number,
 ): Point | typeof COMPLETE {
   const { y } = sandLocation;
   // console.log(cave, sandLocation);
-  const hasBottom = [...cave].some((p) => {
-    const caveLocation = Point.fromString(p);
-    return caveLocation.x === sandLocation.x && caveLocation.y > y;
-  });
+
+  const hasBottom = infiniteFloor
+    ? true
+    : [...cave].some((p) => {
+        const caveLocation = Point.fromString(p);
+        return caveLocation.x === sandLocation.x && caveLocation.y > y;
+      });
   if (!hasBottom) {
     console.log('no bottom');
     return COMPLETE;
   }
   const bottom = new Point(sandLocation.x, y + 1);
   // let the sand drop until it hits a cave floor or another sand floor
-  while (!cave.has(bottom.toString())) {
+  while (!cave.has(bottom.toString()) && infiniteFloor !== bottom.y) {
     bottom.y += 1;
+  }
+  if (infiniteFloor === bottom.y) {
+    bottom.y -= 1;
+    return bottom;
   }
 
   // we hit a cave floor, we need to find the left and right edges of the sand
@@ -82,10 +90,10 @@ function findBottom(
   }
   if (!cave.has(left.toString())) {
     // can move left
-    return findBottom(cave, left);
+    return findBottom(cave, left, infiniteFloor);
   } else if (!cave.has(right.toString())) {
     // can move right
-    return findBottom(cave, right);
+    return findBottom(cave, right, infiniteFloor);
   }
 
   console.log('should not get here');
@@ -107,13 +115,31 @@ const part1 = (rawInput: string) => {
     // printCave(cave, startingPoint);
     sand = findBottom(cave, startingPoint);
   }
+  // printCave(cave, startingPoint);
   return cave.size - wallSize;
 };
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  const startingPoint = new Point(500, 0);
+  // const sand: Set<string> = new Set();
+  const cave = createCave(input);
+  const wallSize = cave.size;
+  const maxY = Math.max(...[...cave].map((p) => Point.fromString(p).y));
+  console.log(maxY + 2);
+  // console.log(cave);
+  // printCave(cave, startingPoint);
+  let sand = findBottom(cave, startingPoint);
+  let i = 0;
+  while (sand !== COMPLETE && i++ < 100500 && sand.toString() !== '(500,0)') {
+    cave.add(sand.toString());
+    // printCave(cave, startingPoint);
+    sand = findBottom(cave, startingPoint, maxY + 2);
+  }
+  // printCave(cave, startingPoint);
+  console.log(sand, i);
 
-  return;
+  return i;
 };
 
 run({
@@ -130,10 +156,12 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        498,4 -> 498,6 -> 496,6
+        503,4 -> 502,4 -> 502,9 -> 494,9`,
+        expected: 93,
+      },
     ],
     solution: part2,
   },
