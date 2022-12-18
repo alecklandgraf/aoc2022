@@ -3,6 +3,8 @@ import _ from 'lodash';
 
 import Point from '../utils/point.js';
 
+const COMPLETE = Symbol('COMPLETE');
+
 const parseInput = (rawInput: string) => rawInput.split('\n');
 
 function createCave(input: string[]) {
@@ -49,14 +51,63 @@ function printCave(cave: Set<string>, startingPoint: Point) {
   }
 }
 
+function findBottom(
+  cave: Set<string>,
+  sandLocation: Point,
+): Point | typeof COMPLETE {
+  const { y } = sandLocation;
+  // console.log(cave, sandLocation);
+  const hasBottom = [...cave].some((p) => {
+    const caveLocation = Point.fromString(p);
+    return caveLocation.x === sandLocation.x && caveLocation.y > y;
+  });
+  if (!hasBottom) {
+    console.log('no bottom');
+    return COMPLETE;
+  }
+  const bottom = new Point(sandLocation.x, y + 1);
+  // let the sand drop until it hits a cave floor or another sand floor
+  while (!cave.has(bottom.toString())) {
+    bottom.y += 1;
+  }
+
+  // we hit a cave floor, we need to find the left and right edges of the sand
+  // note the y is at the floor level, not where the sand will be
+  const left = new Point(bottom.x - 1, bottom.y);
+  const right = new Point(bottom.x + 1, bottom.y);
+  if (cave.has(left.toString()) && cave.has(right.toString())) {
+    // can't move left or right, we're done
+    bottom.y -= 1;
+    return bottom;
+  }
+  if (!cave.has(left.toString())) {
+    // can move left
+    return findBottom(cave, left);
+  } else if (!cave.has(right.toString())) {
+    // can move right
+    return findBottom(cave, right);
+  }
+
+  console.log('should not get here');
+  return COMPLETE;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const startingPoint = new Point(500, 0);
+  // const sand: Set<string> = new Set();
   const cave = createCave(input);
+  const wallSize = cave.size;
   // console.log(cave);
-  printCave(cave, startingPoint);
-
-  return;
+  // printCave(cave, startingPoint);
+  let sand = findBottom(cave, startingPoint);
+  let i = 0;
+  while (sand !== COMPLETE && i++ < 1000) {
+    cave.add(sand.toString());
+    // printCave(cave, startingPoint);
+    sand = findBottom(cave, startingPoint);
+  }
+  return cave.size - wallSize;
 };
 
 const part2 = (rawInput: string) => {
@@ -72,7 +123,7 @@ run({
         input: `
         498,4 -> 498,6 -> 496,6
         503,4 -> 502,4 -> 502,9 -> 494,9`,
-        expected: '24',
+        expected: 24,
       },
     ],
     solution: part1,
@@ -87,5 +138,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
