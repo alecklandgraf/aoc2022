@@ -12,7 +12,7 @@ export default class Point {
   }
 
   static fromString(str: string) {
-    const [x, y] = str.replace('(', '').replace(')', '').split(',').map(Number);
+    const [x, y] = str.replace(/[()]/g, '').split(',').map(Number);
     return new Point(x, y);
   }
 }
