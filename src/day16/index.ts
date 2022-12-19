@@ -1,26 +1,10 @@
 import run from 'aocrunner';
-import { PriorityQueue } from '@datastructures-js/priority-queue';
 
 type Valve = {
   name: string;
   flowRate: number;
   tunnels: Valve[];
-  /** heuristic rate * distance */
-  h: number;
-  /** h + g */
-  f: number;
-  /** steps from start */
-  g: number;
-  parent: Valve | null;
 };
-
-// max prioity queue
-function compareNodes(a: Valve, b: Valve) {
-  if (a.f === b.f) {
-    return b.h - a.h;
-  }
-  return b.f - a.f;
-}
 
 const parseInput = (rawInput: string) => rawInput.split('\n');
 
@@ -39,10 +23,6 @@ function createTunnelNetwork(input: string[]) {
       name: valve,
       flowRate: Number(rate),
       tunnels: [],
-      h: 0,
-      f: 0,
-      g: 0,
-      parent: null,
     });
   }
   // create the edges
@@ -67,64 +47,68 @@ function createTunnelNetwork(input: string[]) {
   return valvesMap;
 }
 
+let valvesMap: Map<string, Valve> = new Map();
+
+const memo = new Map<string, number>();
+const memokey = (start: string, openValves: string, timeRemaining: number) =>
+  `${start}|${openValves}|${timeRemaining}`;
+
+// instead of AA -> II -> JJ, it could be AA -> JJ with a weight of 2
+function getPressureUsed(
+  start: Valve['name'],
+  openValves: string,
+  timeRemaining: number,
+) {
+  if (timeRemaining <= 0) {
+    return 0;
+  }
+  if (memo.has(memokey(start, openValves, timeRemaining))) {
+    return memo.get(memokey(start, openValves, timeRemaining))!;
+  }
+
+  const startValve = valvesMap.get(start)!;
+  let maxPressureUsed = 0;
+
+  // skip opening the current valve if it's open or it's rate is 0
+  // otherwise check the max of 1. opening it and 2. not opening it
+  if (startValve.flowRate > 0 && !openValves.includes(start)) {
+    // hacky string concat, but faster than serializing and deserializing a Set
+    const opens = `${openValves},${start}`.split(',').sort().join(',');
+    const pressureUsed = getPressureUsed(start, opens, timeRemaining - 1);
+    // this is the max pressure used if we open the valve
+    maxPressureUsed = pressureUsed + startValve.flowRate * (timeRemaining - 1);
+  }
+  // check the max pressure used if we don't open the valve
+  for (let tunnel of startValve.tunnels) {
+    const pressureUsed = getPressureUsed(
+      tunnel.name,
+      openValves,
+      timeRemaining - 1,
+    );
+    if (pressureUsed > maxPressureUsed) {
+      maxPressureUsed = pressureUsed;
+    }
+  }
+
+  memo.set(memokey(start, openValves, timeRemaining), maxPressureUsed);
+
+  return maxPressureUsed;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   // console.log(input);
-  const valvesMap = createTunnelNetwork(input);
-  // console.log(valvesMap, valvesMap.get('AA'));
 
-  // make one manual loop to see if we can find the first best node, should be AA -> DD
-  const start = valvesMap.get('AA')!;
-  let open = new PriorityQueue<Valve>(compareNodes);
-  const closed = new Set<Valve>();
-  const visited = new Set<Valve>();
+  // reset the memoization between runs
+  memo.clear();
+  valvesMap.clear();
 
-  start.g = 0;
-  open.enqueue(start);
-  let lastNode: Valve | null = null;
-  while (open.size()) {
-    const current = open.dequeue();
-    closed.add(current);
-    // normally here we'd check for the goal/end node
-    if (closed.size === valvesMap.size) {
-      console.log('found all nodes');
-      lastNode = current;
-      break;
-    }
-    // check all the neighbours
-    for (let tunnel of current.tunnels) {
-      if (closed.has(tunnel)) {
-        continue;
-      }
-      // calculate the heuristic
-      const h = tunnel.flowRate;
-      // calculate the g
-      const g = current.g + 1;
-      // calculate the f
-      const f = h * g;
-      // check if we've visited this node before
-      const beenVisited = visited.has(tunnel);
-      if (!beenVisited || g < tunnel.g) {
-        // if it's a better path, update the node
-        tunnel.g = g;
-        tunnel.h = h;
-        tunnel.f = f;
-        tunnel.parent = current;
-        visited.add(tunnel);
-        if (!beenVisited) {
-          open.enqueue(tunnel);
-        } else {
-          // heapify
-          open = PriorityQueue.fromArray<Valve>(open.toArray(), compareNodes);
-        }
-      }
-    }
-  }
-  // console.log(closed);
+  valvesMap = createTunnelNetwork(input);
 
-  console.log('HH', valvesMap.get('HH'));
+  const pressureUsed = getPressureUsed('AA', '', 30);
+  console.log({ pressureUsed });
 
-  return;
+  return pressureUsed;
 };
 
 const part2 = (rawInput: string) => {
@@ -163,5 +147,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
