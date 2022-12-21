@@ -49,21 +49,30 @@ function createTunnelNetwork(input: string[]) {
 
 let valvesMap: Map<string, Valve> = new Map();
 
-const memo = new Map<string, number>();
-const memokey = (start: string, openValves: string, timeRemaining: number) =>
-  `${start}|${openValves}|${timeRemaining}`;
+// const memo = new Map<string, number>();
+let memo: { [key: string]: number } = {};
+const memokey = (
+  start: string,
+  openValves: string,
+  timeRemaining: number,
+  twoPlayers: boolean,
+) => `${start}|${openValves}|${timeRemaining}|${twoPlayers}`;
 
 // instead of AA -> II -> JJ, it could be AA -> JJ with a weight of 2
 function getPressureUsed(
   start: Valve['name'],
   openValves: string,
   timeRemaining: number,
-) {
+  twoPlayers: boolean = false,
+): number {
+  // if there are two players, the first player can go, then we can reset the clock and the second player can go
+  // using the same set of open valves
   if (timeRemaining <= 0) {
-    return 0;
+    return twoPlayers ? getPressureUsed('AA', openValves, 26, false) : 0;
   }
-  if (memo.has(memokey(start, openValves, timeRemaining))) {
-    return memo.get(memokey(start, openValves, timeRemaining))!;
+  // memo check needs to come after the timeRemaining check
+  if (memo[memokey(start, openValves, timeRemaining, twoPlayers)]) {
+    return memo[memokey(start, openValves, timeRemaining, twoPlayers)];
   }
 
   const startValve = valvesMap.get(start)!;
@@ -74,7 +83,12 @@ function getPressureUsed(
   if (startValve.flowRate > 0 && !openValves.includes(start)) {
     // hacky string concat, but faster than serializing and deserializing a Set
     const opens = `${openValves},${start}`.split(',').sort().join(',');
-    const pressureUsed = getPressureUsed(start, opens, timeRemaining - 1);
+    const pressureUsed = getPressureUsed(
+      start,
+      opens,
+      timeRemaining - 1,
+      twoPlayers,
+    );
     // this is the max pressure used if we open the valve
     maxPressureUsed = pressureUsed + startValve.flowRate * (timeRemaining - 1);
   }
@@ -84,13 +98,14 @@ function getPressureUsed(
       tunnel.name,
       openValves,
       timeRemaining - 1,
+      twoPlayers,
     );
     if (pressureUsed > maxPressureUsed) {
       maxPressureUsed = pressureUsed;
     }
   }
 
-  memo.set(memokey(start, openValves, timeRemaining), maxPressureUsed);
+  memo[memokey(start, openValves, timeRemaining, twoPlayers)] = maxPressureUsed;
 
   return maxPressureUsed;
 }
@@ -100,7 +115,7 @@ const part1 = (rawInput: string) => {
   // console.log(input);
 
   // reset the memoization between runs
-  memo.clear();
+  memo = {};
   valvesMap.clear();
 
   valvesMap = createTunnelNetwork(input);
@@ -114,7 +129,14 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  return;
+  memo = {};
+  valvesMap.clear();
+
+  valvesMap = createTunnelNetwork(input);
+  const pressureUsed = getPressureUsed('AA', '', 26, true);
+  // console.log(memo.size);
+
+  return pressureUsed;
 };
 
 run({
@@ -139,10 +161,20 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+        Valve BB has flow rate=13; tunnels lead to valves CC, AA
+        Valve CC has flow rate=2; tunnels lead to valves DD, BB
+        Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+        Valve EE has flow rate=3; tunnels lead to valves FF, DD
+        Valve FF has flow rate=0; tunnels lead to valves EE, GG
+        Valve GG has flow rate=0; tunnels lead to valves FF, HH
+        Valve HH has flow rate=22; tunnel leads to valve GG
+        Valve II has flow rate=0; tunnels lead to valves AA, JJ
+        Valve JJ has flow rate=21; tunnel leads to valve II`,
+        expected: 1707,
+      },
     ],
     solution: part2,
   },
