@@ -8,6 +8,12 @@ type Valve = {
 
 const parseInput = (rawInput: string) => rawInput.split('\n');
 
+// this is used like a set, but it's faster to check if a bit is set
+// AA -> 1, BB -> 2, CC -> 4, etc
+// then you can add and subtract them to get the open valves
+// and check via bitwise AND if a valve is open
+const valveBitMap: Map<string, number> = new Map();
+
 function createTunnelNetwork(input: string[]) {
   const valvesMap: Map<string, Valve> = new Map();
   const reValve =
@@ -24,6 +30,7 @@ function createTunnelNetwork(input: string[]) {
       flowRate: Number(rate),
       tunnels: [],
     });
+    valveBitMap.set(valve, 1 << valveBitMap.size);
   }
   // create the edges
   for (let line of input) {
@@ -49,8 +56,7 @@ function createTunnelNetwork(input: string[]) {
 
 let valvesMap: Map<string, Valve> = new Map();
 
-// const memo = new Map<string, number>();
-let memo: { [key: string]: number } = {};
+const memo = new Map<string, number>();
 const memokey = (
   start: string,
   openValves: string,
@@ -67,12 +73,12 @@ function getPressureUsed(
 ): number {
   // if there are two players, the first player can go, then we can reset the clock and the second player can go
   // using the same set of open valves
-  if (timeRemaining <= 0) {
+  if (timeRemaining <= 1) {
     return twoPlayers ? getPressureUsed('AA', openValves, 26, false) : 0;
   }
   // memo check needs to come after the timeRemaining check
-  if (memo[memokey(start, openValves, timeRemaining, twoPlayers)]) {
-    return memo[memokey(start, openValves, timeRemaining, twoPlayers)];
+  if (memo.has(memokey(start, openValves, timeRemaining, twoPlayers))) {
+    return memo.get(memokey(start, openValves, timeRemaining, twoPlayers))!;
   }
 
   const startValve = valvesMap.get(start)!;
@@ -92,6 +98,9 @@ function getPressureUsed(
     // this is the max pressure used if we open the valve
     maxPressureUsed = pressureUsed + startValve.flowRate * (timeRemaining - 1);
   }
+  if (timeRemaining <= 2) {
+    return maxPressureUsed;
+  }
   // check the max pressure used if we don't open the valve
   for (let tunnel of startValve.tunnels) {
     const pressureUsed = getPressureUsed(
@@ -105,9 +114,80 @@ function getPressureUsed(
     }
   }
 
-  memo[memokey(start, openValves, timeRemaining, twoPlayers)] = maxPressureUsed;
+  memo.set(
+    memokey(start, openValves, timeRemaining, twoPlayers),
+    maxPressureUsed,
+  );
 
   return maxPressureUsed;
+}
+
+function floydWarshall(valvesMap: Map<string, Valve>) {
+  const distances = new Map<string, number>();
+  for (let i of valvesMap.keys()) {
+    for (let j of valvesMap.keys()) {
+      distances.set(i + j, Infinity);
+      if (i === j) {
+        distances.set(i + j, 0);
+      }
+      if (valvesMap.get(i)!.tunnels.includes(valvesMap.get(j)!)) {
+        distances.set(i + j, 1);
+      }
+    }
+  }
+
+  for (let k of valvesMap.keys()) {
+    for (let i of valvesMap.keys()) {
+      for (let j of valvesMap.keys()) {
+        const newDistance = distances.get(i + k)! + distances.get(k + j)!;
+        if (newDistance < distances.get(i + j)!) {
+          distances.set(i + j, newDistance);
+        }
+      }
+    }
+  }
+
+  return distances;
+}
+
+function getPath(
+  distances: Map<string, number>,
+  valveMap: Map<string, Valve>,
+  remainingValves: number,
+  timeRemaining: number,
+  start: string,
+  path: { [valveName: string]: number } = {},
+) {
+  const paths = [path];
+  if (timeRemaining < 2) return paths;
+  timeRemaining === 30 &&
+    console.log({
+      remainingValves: [...valveBitMap.keys()].filter(
+        (valveName) => valveBitMap.get(valveName)! & remainingValves,
+      ),
+    });
+  for (let valveName of [...valveBitMap.keys()].filter(
+    (valveName) => valveBitMap.get(valveName)! & remainingValves,
+  )) {
+    const distance = distances.get(start + valveName)!;
+    if (timeRemaining == 30) console.log({ distance, next: start + valveName });
+    const time = timeRemaining - distance - 1;
+
+    const newPath = { ...path, [valveName]: time };
+    timeRemaining === 30 && console.log({ newPath });
+    //@ts-ignore
+    paths.concat(
+      getPath(
+        distances,
+        valveMap,
+        remainingValves - valveBitMap.get(valveName)!,
+        time,
+        valveName,
+        newPath,
+      ),
+    );
+  }
+  return paths;
 }
 
 const part1 = (rawInput: string) => {
@@ -115,8 +195,9 @@ const part1 = (rawInput: string) => {
   // console.log(input);
 
   // reset the memoization between runs
-  memo = {};
+  memo.clear();
   valvesMap.clear();
+  valveBitMap.clear();
 
   valvesMap = createTunnelNetwork(input);
 
@@ -129,14 +210,24 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  memo = {};
+  memo.clear();
   valvesMap.clear();
+  valveBitMap.clear();
 
   valvesMap = createTunnelNetwork(input);
-  const pressureUsed = getPressureUsed('AA', '', 26, true);
-  // console.log(memo.size);
+  const distances = floydWarshall(valvesMap);
+  // console.log(distances);
+  // console.log({ valveBitMap });
+  const remainingValves = [...valveBitMap.entries()]
+    .filter(([key, val]) => valvesMap.get(key)?.flowRate)
+    .map(([key, val]) => val)
+    .reduce((a, b) => a + b, 0);
+  console.log({ remainingValves });
+  // const pressureUsed = getPressureUsed('AA', '', 26, true);
+  const paths = getPath(distances, valvesMap, remainingValves, 30, 'AA');
+  console.log(paths);
 
-  return pressureUsed;
+  // return pressureUsed;
 };
 
 run({
@@ -179,5 +270,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  // onlyTests: true,
+  onlyTests: true,
 });
