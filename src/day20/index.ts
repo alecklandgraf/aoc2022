@@ -1,33 +1,35 @@
 import run from 'aocrunner';
+import _ from 'lodash';
 
-const parseInput = (rawInput: string) => rawInput.split('\n').map(Number);
+const parseInput = (rawInput: string) =>
+  rawInput.split('\n').map((x, i) => ({
+    i,
+    num: Number(x),
+  }));
 
-class LinkedList {
-  constructor(
-    public value: number,
-    public index: number,
-    public next: LinkedList | null = null,
-    public previous: LinkedList | null = null,
-  ) {}
+function mix(file: { i: number; num: number }[]) {
+  const copy = [...file];
+  for (const x of file) {
+    const { num, i } = x;
+    const iCopy = copy.indexOf(x);
+    const newIndex = (iCopy + num) % (copy.length - 1);
+    copy.splice(iCopy, 1);
+    copy.splice(newIndex, 0, { num, i });
+  }
+  return copy;
 }
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  console.log(input);
-  let ll = new LinkedList(input[0], 0);
-  const head = ll;
-  for (let i = 1; i < input.length; i++) {
-    const node = new LinkedList(input[i], i);
-    ll.next = node;
-    node.previous = ll;
-    ll = node;
-  }
-  ll.next = head;
-  head.previous = ll;
-  ll = head;
-  console.log(ll);
+  const mixed = mix(input);
+  const startIndex = mixed.indexOf(mixed.find((x) => x.num === 0)!);
+  // console.log(startIndex, mixed);
 
-  return;
+  let sum = 0;
+  for (const iter of _.range(1000, 3001, 1000)) {
+    sum += mixed[(iter + startIndex) % mixed.length].num;
+  }
+  return sum;
 };
 
 const part2 = (rawInput: string) => {
@@ -63,5 +65,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
