@@ -204,6 +204,9 @@ function floydWarshall(valvesMap: Map<string, Valve>) {
   return distances;
 }
 
+// There's some bug here that I didn't figure out which works for the example but not the real input
+// for either part 1 or part 2. I ended up using the solution for part 1 and increasing the cache size.
+// TODO(Aleck): come back and figure out what's wrong here
 function* getPath(
   distances: Map<string, number>,
   valveMap: Map<string, Valve>,
