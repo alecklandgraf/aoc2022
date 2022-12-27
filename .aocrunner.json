@@ -288,13 +288,13 @@
           "-11930",
           "-17393"
         ],
-        "time": 11.119959
+        "time": 10.132447
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "8332585833851",
         "attempts": [],
-        "time": null
+        "time": 108.966097
       }
     },
     {
