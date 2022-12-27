@@ -1,4 +1,5 @@
 import run from 'aocrunner';
+import _ from 'lodash';
 
 type Valve = {
   name: string;
@@ -150,16 +151,16 @@ function floydWarshall(valvesMap: Map<string, Valve>) {
   return distances;
 }
 
-function getPath(
+function* getPath(
   distances: Map<string, number>,
   valveMap: Map<string, Valve>,
   remainingValves: number,
   timeRemaining: number,
   start: string,
   path: { [valveName: string]: number } = {},
-) {
-  let paths = [path];
-  if (timeRemaining < 2) return paths;
+): Generator<{ [valveName: string]: number }> {
+  // let paths = [path];
+  // if (timeRemaining < 2) yield paths;
   // timeRemaining === 4 &&
   //   console.log({
   //     remainingValves: [...valveBitMap.keys()].filter(
@@ -173,10 +174,11 @@ function getPath(
     const distance = distances.get(start + valveName)!;
     // if (timeRemaining == 28) console.log({ distance, next: start + valveName });
     const time = timeRemaining - distance - 1;
+    if (time < 2) continue;
 
     const newPath = { ...path, [valveName]: time };
     // timeRemaining === 4 && console.log({ newPath });
-    const solutionPath = getPath(
+    yield* getPath(
       distances,
       valveMap,
       remainingValves - valveBitMap.get(valveName)!,
@@ -184,11 +186,12 @@ function getPath(
       valveName,
       newPath,
     );
-    paths = [...paths, ...solutionPath];
+    // paths = [...paths, ...solutionPath];
     // console.log({ paths });
   }
 
-  return paths;
+  // return paths;
+  yield path;
 }
 
 const part1 = (rawInput: string) => {
@@ -225,17 +228,28 @@ const part2 = (rawInput: string) => {
     .reduce((a, b) => a | b, 0);
   // console.log({ remainingValves });
   // const pressureUsed = getPressureUsed('AA', '', 26, true);
-  const paths = getPath(distances, valvesMap, remainingValves, 30, 'AA');
-  // console.log(paths);
-  const mostPressureUsed = Math.max(
-    ...paths.map((path) => {
-      return Object.entries(path).reduce((a, [valveName, time]) => {
-        return a + valvesMap.get(valveName)!.flowRate * time;
-      }, 0);
-    }),
-  );
+  // const paths = getPath(distances, valvesMap, remainingValves, 30, 'AA');
+  // // console.log(paths);
+  // const mostPressureUsed = Math.max(
+  //   ...paths.map((path) => {
+  //     return Object.entries(path).reduce((a, [valveName, time]) => {
+  //       return a + valvesMap.get(valveName)!.flowRate * time;
+  //     }, 0);
+  //   }),
+  // );
 
-  return mostPressureUsed;
+  let max = 0;
+  for (let path of getPath(distances, valvesMap, remainingValves, 30, 'AA')) {
+    max = Math.max(
+      _.sumBy(
+        Object.entries(path),
+        ([valveName, time]) => valvesMap.get(valveName)!.flowRate * time,
+      ),
+      max,
+    );
+  }
+
+  return max;
 };
 
 run({
