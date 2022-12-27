@@ -229,15 +229,15 @@
         "attempts": [
           "1651"
         ],
-        "time": 1263.659448
+        "time": 894.947663
       },
       "part2": {
-        "solved": false,
-        "result": "2399",
+        "solved": true,
+        "result": "2464",
         "attempts": [
           "2399"
         ],
-        "time": 6789.661612
+        "time": 36896.589835
       }
     },
     {

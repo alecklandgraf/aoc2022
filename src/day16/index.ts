@@ -1,6 +1,48 @@
 import run from 'aocrunner';
 import _ from 'lodash';
 
+const MAX_MAP_SIZE = 16777216;
+
+function hashCode(s: string) {
+  var hash = 0,
+    i,
+    chr;
+  if (s.length === 0) return hash;
+  for (i = 0; i < s.length; i++) {
+    chr = s.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+let memos = [
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+  new Map<string, number>(),
+];
+function reset() {
+  memos = [
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+    new Map<string, number>(),
+  ];
+}
+
 type Valve = {
   name: string;
   flowRate: number;
@@ -78,9 +120,14 @@ function getPressureUsed(
     return twoPlayers ? getPressureUsed('AA', openValves, 26, false) : 0;
   }
   // memo check needs to come after the timeRemaining check
-  if (memo.has(memokey(start, openValves, timeRemaining, twoPlayers))) {
-    return memo.get(memokey(start, openValves, timeRemaining, twoPlayers))!;
+  const key = memokey(start, openValves, timeRemaining, twoPlayers);
+  const hashIndex = Math.abs(hashCode(key) % memos.length);
+  if (memos[hashIndex].has(key)) {
+    return memos[hashIndex].get(key)!;
   }
+  // if (memo.has(memokey(start, openValves, timeRemaining, twoPlayers))) {
+  //   return memo.get(memokey(start, openValves, timeRemaining, twoPlayers))!;
+  // }
 
   const startValve = valvesMap.get(start)!;
   let maxPressureUsed = 0;
@@ -99,7 +146,7 @@ function getPressureUsed(
     // this is the max pressure used if we open the valve
     maxPressureUsed = pressureUsed + startValve.flowRate * (timeRemaining - 1);
   }
-  if (timeRemaining <= 2) {
+  if (timeRemaining <= 1) {
     return maxPressureUsed;
   }
   // check the max pressure used if we don't open the valve
@@ -115,10 +162,16 @@ function getPressureUsed(
     }
   }
 
-  memo.set(
-    memokey(start, openValves, timeRemaining, twoPlayers),
-    maxPressureUsed,
-  );
+  // try {
+  //   memo.set(
+  //     memokey(start, openValves, timeRemaining, twoPlayers),
+  //     maxPressureUsed,
+  //   );
+  // } catch (e) {
+  //   console.log(memo.size);
+  //   throw e;
+  // }
+  memos[hashIndex].set(key, maxPressureUsed);
 
   return maxPressureUsed;
 }
@@ -206,13 +259,14 @@ const part1 = (rawInput: string) => {
 
   // reset the memoization between runs
   memo.clear();
+  reset();
   valvesMap.clear();
   valveBitMap.clear();
 
   valvesMap = createTunnelNetwork(input);
 
   const pressureUsed = getPressureUsed('AA', '', 30);
-  console.log({ pressureUsed });
+  // console.log({ pressureUsed });
 
   return pressureUsed;
 };
@@ -221,10 +275,13 @@ const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
   memo.clear();
+  reset();
   valvesMap.clear();
   valveBitMap.clear();
 
   valvesMap = createTunnelNetwork(input);
+  const pressureUsed = getPressureUsed('AA', '', 26, true);
+  return pressureUsed;
   const distances = floydWarshall(valvesMap);
   // console.log(distances);
   // console.log({ valveBitMap });
@@ -235,6 +292,8 @@ const part2 = (rawInput: string) => {
   // console.log({ remainingValves });
 
   const maxPaths = new Map<number, number>();
+  console.log({ remainingValves });
+  // return;
   for (let path of getPath(distances, valvesMap, remainingValves, 26, 'AA')) {
     const sum = _.sumBy(
       Object.entries(path),
@@ -268,9 +327,9 @@ run({
     tests: [
       {
         input: `
-        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve BB has flow rate=13; tunnels lead to valves CC, AA
         Valve CC has flow rate=2; tunnels lead to valves DD, BB
+        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
         Valve EE has flow rate=3; tunnels lead to valves FF, DD
         Valve FF has flow rate=0; tunnels lead to valves EE, GG
@@ -287,9 +346,9 @@ run({
     tests: [
       {
         input: `
-        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve BB has flow rate=13; tunnels lead to valves CC, AA
         Valve CC has flow rate=2; tunnels lead to valves DD, BB
+        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
         Valve EE has flow rate=3; tunnels lead to valves FF, DD
         Valve FF has flow rate=0; tunnels lead to valves EE, GG
