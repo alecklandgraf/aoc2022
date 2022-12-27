@@ -194,6 +194,12 @@ function* getPath(
   yield path;
 }
 
+function bitMapFromPath(path: { [valveName: string]: number }) {
+  return Object.keys(path)
+    .map((valveName) => valveBitMap.get(valveName)!)
+    .reduce((acc, value) => acc | value, 0);
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   // console.log(input);
@@ -227,26 +233,31 @@ const part2 = (rawInput: string) => {
     .map(([key, val]) => val)
     .reduce((a, b) => a | b, 0);
   // console.log({ remainingValves });
-  // const pressureUsed = getPressureUsed('AA', '', 26, true);
-  // const paths = getPath(distances, valvesMap, remainingValves, 30, 'AA');
-  // // console.log(paths);
-  // const mostPressureUsed = Math.max(
-  //   ...paths.map((path) => {
-  //     return Object.entries(path).reduce((a, [valveName, time]) => {
-  //       return a + valvesMap.get(valveName)!.flowRate * time;
-  //     }, 0);
-  //   }),
-  // );
 
-  let max = 0;
-  for (let path of getPath(distances, valvesMap, remainingValves, 30, 'AA')) {
-    max = Math.max(
-      _.sumBy(
-        Object.entries(path),
-        ([valveName, time]) => valvesMap.get(valveName)!.flowRate * time,
-      ),
-      max,
+  const maxPaths = new Map<number, number>();
+  for (let path of getPath(distances, valvesMap, remainingValves, 26, 'AA')) {
+    const sum = _.sumBy(
+      Object.entries(path),
+      ([valveName, time]) => valvesMap.get(valveName)!.flowRate * time,
     );
+    const bitmap = bitMapFromPath(path);
+    if (!maxPaths.has(bitmap)) maxPaths.set(bitmap, 0);
+    maxPaths.set(bitmap, Math.max(maxPaths.get(bitmap)!, sum));
+    // if (bitmap === 670 && sum === 1651) console.log(path);
+  }
+  // console.log(maxPaths);
+  // console.log({
+  //   remainingValves: [...valveBitMap.keys()].filter(
+  //     (valveName) => valveBitMap.get(valveName)! & 670,
+  //   ),
+  // });
+  let max = 0;
+  for (const [player1, pressure1] of maxPaths.entries()) {
+    for (const [player2, pressure2] of maxPaths.entries()) {
+      // only check paths that visited different valves, in the bitmaps, 101 & 010 = 000; 110 & 101 = 100
+      if (player1 & player2) continue;
+      max = Math.max(max, pressure1 + pressure2);
+    }
   }
 
   return max;
@@ -292,5 +303,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 });
