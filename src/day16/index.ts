@@ -158,35 +158,36 @@ function getPath(
   start: string,
   path: { [valveName: string]: number } = {},
 ) {
-  const paths = [path];
+  let paths = [path];
   if (timeRemaining < 2) return paths;
-  timeRemaining === 30 &&
-    console.log({
-      remainingValves: [...valveBitMap.keys()].filter(
-        (valveName) => valveBitMap.get(valveName)! & remainingValves,
-      ),
-    });
+  // timeRemaining === 4 &&
+  //   console.log({
+  //     remainingValves: [...valveBitMap.keys()].filter(
+  //       (valveName) => valveBitMap.get(valveName)! & remainingValves,
+  //     ),
+  //     paths,
+  //   });
   for (let valveName of [...valveBitMap.keys()].filter(
     (valveName) => valveBitMap.get(valveName)! & remainingValves,
   )) {
     const distance = distances.get(start + valveName)!;
-    if (timeRemaining == 30) console.log({ distance, next: start + valveName });
+    // if (timeRemaining == 28) console.log({ distance, next: start + valveName });
     const time = timeRemaining - distance - 1;
 
     const newPath = { ...path, [valveName]: time };
-    timeRemaining === 30 && console.log({ newPath });
-    //@ts-ignore
-    paths.concat(
-      getPath(
-        distances,
-        valveMap,
-        remainingValves - valveBitMap.get(valveName)!,
-        time,
-        valveName,
-        newPath,
-      ),
+    // timeRemaining === 4 && console.log({ newPath });
+    const solutionPath = getPath(
+      distances,
+      valveMap,
+      remainingValves - valveBitMap.get(valveName)!,
+      time,
+      valveName,
+      newPath,
     );
+    paths = [...paths, ...solutionPath];
+    // console.log({ paths });
   }
+
   return paths;
 }
 
@@ -219,15 +220,22 @@ const part2 = (rawInput: string) => {
   // console.log(distances);
   // console.log({ valveBitMap });
   const remainingValves = [...valveBitMap.entries()]
-    .filter(([key, val]) => valvesMap.get(key)?.flowRate)
+    .filter(([key]) => valvesMap.get(key)?.flowRate)
     .map(([key, val]) => val)
-    .reduce((a, b) => a + b, 0);
-  console.log({ remainingValves });
+    .reduce((a, b) => a | b, 0);
+  // console.log({ remainingValves });
   // const pressureUsed = getPressureUsed('AA', '', 26, true);
   const paths = getPath(distances, valvesMap, remainingValves, 30, 'AA');
-  console.log(paths);
+  // console.log(paths);
+  const mostPressureUsed = Math.max(
+    ...paths.map((path) => {
+      return Object.entries(path).reduce((a, [valveName, time]) => {
+        return a + valvesMap.get(valveName)!.flowRate * time;
+      }, 0);
+    }),
+  );
 
-  // return pressureUsed;
+  return mostPressureUsed;
 };
 
 run({
