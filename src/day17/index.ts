@@ -88,6 +88,7 @@ function jetGasPush(
 ): number {
   let newIndex = leftIndex;
   const width = Math.max(...shape.map((row) => row.length));
+  // console.log({ width, leftIndex, jetPattern });
   if (jetPattern === LEFT) {
     newIndex--;
   }
@@ -95,19 +96,13 @@ function jetGasPush(
     newIndex++;
   }
   if (newIndex < 0) newIndex = leftIndex;
-  if (newIndex + width > 6) newIndex = leftIndex;
+  if (newIndex + width > 7) newIndex = leftIndex;
   return newIndex;
 }
-const JET_PATTERN_MAP = {
-  '<': LEFT,
-  '>': RIGHT,
-} as const;
 
 function simulate(shape: Shape, state: State): State {
   // this is the top index but there should be three empty lines above it
-  console.log('top');
   let startIndex = top(state.chamber) + 4;
-  console.log('top2');
   let leftIndex = 2;
   let safety = 0;
   leftIndex = jetGasPush(
@@ -115,25 +110,41 @@ function simulate(shape: Shape, state: State): State {
     leftIndex,
     state.jetPattern[state.jetPatternIndex],
   );
-  // console.log('can', canMoveDown(shape, state, startIndex, leftIndex));
+  console.log('start', {
+    startIndex,
+    leftIndex,
+    jetPattern: state.jetPattern[state.jetPatternIndex],
+  });
+  while (canMoveDown(shape, state, startIndex, leftIndex) && safety++ < 100) {
+    startIndex--;
+    state.jetPatternIndex =
+      (state.jetPatternIndex + 1) % state.jetPattern.length;
+    console.log({ startIndex, leftIndex, jetPattern: state.jetPatternIndex });
+    leftIndex = jetGasPush(
+      shape,
+      leftIndex,
+      state.jetPattern[state.jetPatternIndex],
+    );
+  }
+  console.log({ startIndex, leftIndex, shape });
 
   return state;
 }
 
 const part1 = (rawInput: string) => {
   const jetPattern = parseInput(rawInput) as JetPattern[];
-  // console.log(jetPattern);
+
   let state: State = {
     chamber: _.fill(Array(10), ''),
     jetPattern,
     jetPatternIndex: 0,
   };
-  state.chamber;
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 1; i++) {
     const shape = shapes[i % shapes.length];
     state = simulate(shape, state);
   }
+  // console.log(jetGasPush(shape1, 2, '>'));
 
   return;
 };
