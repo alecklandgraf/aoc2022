@@ -80,19 +80,43 @@ function canMoveDown(
   }
   return true;
 }
+function canMove(
+  shape: Shape,
+  state: State,
+  height: number,
+  left: number,
+  direction: JetPattern,
+): boolean {
+  return true;
+}
+const canMoveLeft = (
+  shape: Shape,
+  state: State,
+  height: number,
+  left: number,
+) => canMove(shape, state, height, left, LEFT);
+const canMoveRight = (
+  shape: Shape,
+  state: State,
+  height: number,
+  left: number,
+) => canMove(shape, state, height, left, RIGHT);
 
 function jetGasPush(
   shape: Shape,
+  state: State,
+  height: number,
   leftIndex: number,
-  jetPattern: JetPattern,
 ): number {
+  const jetPattern = state.jetPattern[state.jetPatternIndex];
   let newIndex = leftIndex;
   const width = Math.max(...shape.map((row) => row.length));
+
   // console.log({ width, leftIndex, jetPattern });
-  if (jetPattern === LEFT) {
+  if (jetPattern === LEFT && canMoveLeft(shape, state, height, leftIndex)) {
     newIndex--;
   }
-  if (jetPattern === RIGHT) {
+  if (jetPattern === RIGHT && canMoveRight(shape, state, height, leftIndex)) {
     newIndex++;
   }
   if (newIndex < 0) newIndex = leftIndex;
@@ -105,11 +129,7 @@ function simulate(shape: Shape, state: State): State {
   let startIndex = top(state.chamber) + 4;
   let leftIndex = 2;
   let safety = 0;
-  leftIndex = jetGasPush(
-    shape,
-    leftIndex,
-    state.jetPattern[state.jetPatternIndex],
-  );
+  leftIndex = jetGasPush(shape, state, startIndex, leftIndex);
   console.log('start', {
     startIndex,
     leftIndex,
@@ -120,11 +140,7 @@ function simulate(shape: Shape, state: State): State {
     state.jetPatternIndex =
       (state.jetPatternIndex + 1) % state.jetPattern.length;
     console.log({ startIndex, leftIndex, jetPattern: state.jetPatternIndex });
-    leftIndex = jetGasPush(
-      shape,
-      leftIndex,
-      state.jetPattern[state.jetPatternIndex],
-    );
+    leftIndex = jetGasPush(shape, state, startIndex, leftIndex);
   }
   console.log({ startIndex, leftIndex, shape });
 
